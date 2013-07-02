@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>SolarSize - Drawing solar panels</title>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="bootstrap/css/bootstrap.min.css" rel="stylesheet" media="screen">
+	<link rel="stylesheet" href="leaflet/leaflet.css" />
+	<!--[if lte IE 8]><link rel="stylesheet" href="../dist/leaflet.ie.css" /><![endif]-->
+	<style>
+		/* Base HTML */
+		body {
+			margin:10px;
+		}
+		form {
+			margin: 10px;
+		}
+		input[type="text"] {
+			font-size:12px;
+		}
+
+		/* Bootstrap */
+		.well {
+			border-radius: 8px 8px 8px 8px;
+			padding: 8px;
+			margin-bottom: 8px;
+		}
+		.spanmap {
+ 		   width: 810px;
+		}
+		.row {
+		    margin-left: 0px;
+		}
+		[class*="span"] {
+			margin-right: 10px;
+			margin-left: 0;
+		}
+
+		/* Leaflet */		
+		.leaflet-container .leaflet-control-attribution {
+			font-size: 8px;
+		}
+
+		/* Misc */
+		.centered {
+			text-align: center;
+		}
+
+	</style>
+</head>
+<body>
+	<div class="row">
+		<div class="spanmap">
+			<div class="well" style="width: 792px;">
+				<div id="map" style="width: 792px; height: 792px; border: 1px;"></div>
+			</div>
+		</div>
+	</div>
+
+    <script src="http://code.jquery.com/jquery.js"></script>
+    <script src="bootstrap/js/bootstrap.min.js"></script>
+	<script src="leaflet/leaflet.js"></script>
+	<script src="leaflet-plugins/layer/tile/Bing.js"></script>
+	<script>
+
+		var map;
+
+		function initmap() {
+			// Set up the map
+			map = L.map('map').setView([-37.815,144.963], 15);
+			// Create the Bing layer and add it to the map
+			var binglayer = new L.BingLayer('AgxcV_eHKN9sD_UzjdBKiXru-b_mGfIKjD1SkgR0zJhhGQAAKqFvTs442gc1Eaay','Aerial')
+				.addTo(map);
+
+		}
+
+		initmap();
+
+	</script>
+</body>
+</html>
