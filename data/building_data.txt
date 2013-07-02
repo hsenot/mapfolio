@@ -1,0 +1,24 @@
+TODO: script that!
+Getting building data:
+
+Create a structure to host the building data:
+CREATE TABLE osm_buildings
+(
+  osm_id integer NOT NULL,
+  building text,
+  name text,
+  addr_housenumber character varying,
+  addr_street character varying,
+  addr_city character varying,
+  addr_postcode character varying,
+  the_geom geometry(Geometry,4326),
+  CONSTRAINT osm_building_pk PRIMARY KEY (osm_id )
+)
+
+Download the buildings data file from:
+http://app.carbongis.com.au/bip/data/PGDUMP/buildings.sql.zip
+
+Unzip
+
+Load the data into the local structure:
+copy osm_buildings from '/path/to/file';
