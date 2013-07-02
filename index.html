@@ -26,7 +26,7 @@
 			margin-bottom: 8px;
 		}
 		.spanmap {
- 		   width: 810px;
+ 		   width: 610px;
 		}
 		.row {
 		    margin-left: 0px;
@@ -51,8 +51,8 @@
 <body>
 	<div class="row">
 		<div class="spanmap">
-			<div class="well" style="width: 792px;">
-				<div id="map" style="width: 792px; height: 792px; border: 1px;"></div>
+			<div class="well" style="width: 592px;">
+				<div id="map" style="width: 592px; height: 592px; border: 1px;"></div>
 			</div>
 		</div>
 	</div>
@@ -71,6 +71,28 @@
 			// Create the Bing layer and add it to the map
 			var binglayer = new L.BingLayer('AgxcV_eHKN9sD_UzjdBKiXru-b_mGfIKjD1SkgR0zJhhGQAAKqFvTs442gc1Eaay','Aerial')
 				.addTo(map);
+
+			// Adding City of Melbourne roofs
+			$.ajax({
+				type : 'GET',
+				dataType : 'json',
+				url: 'data/com.geojson',
+				success : function(data) {
+					var geojsonFeature=data;
+					L.geoJson(geojsonFeature).addTo(map);
+				} 
+			});
+
+			// Adding City of Port Philip roofs
+			$.ajax({
+				type : 'GET',
+				dataType : 'json',
+				url: 'data/copp.geojson',
+				success : function(data) {
+					var geojsonFeature=data;
+					L.geoJson(geojsonFeature).addTo(map);
+				} 
+			});
 
 		}
 
