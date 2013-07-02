@@ -72,22 +72,19 @@
 			var binglayer = new L.BingLayer('AgxcV_eHKN9sD_UzjdBKiXru-b_mGfIKjD1SkgR0zJhhGQAAKqFvTs442gc1Eaay','Aerial')
 				.addTo(map);
 
-			// Adding City of Melbourne roofs
+			var geoJSONBBOXFeatures;
 			$.ajax({
 				type : 'GET',
 				dataType : 'json',
-				url: 'data/com.geojson',
-				success : function(data) {
-					var geojsonFeature=data;
-					L.geoJson(geojsonFeature).addTo(map);
-				} 
-			});
-
-			// Adding City of Port Philip roofs
-			$.ajax({
-				type : 'GET',
-				dataType : 'json',
-				url: 'data/copp.geojson',
+				data: {
+					geotable:'osm_buildings',
+					geomfield:'the_geom',
+					fields:'osm_id as id,name',
+					limit: 500,
+					orderby:'ST_Distance(the_geom,ST_SetSRID(ST_Point('+map.getCenter().lng+','+map.getCenter().lat+'),4326))',
+					sort:'ASC'
+				},
+				url: 'ws/postgis_geojson.php?bbox=' + map.getBounds().toBBoxString(),
 				success : function(data) {
 					var geojsonFeature=data;
 					L.geoJson(geojsonFeature).addTo(map);

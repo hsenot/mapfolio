@@ -46,6 +46,8 @@ if (empty($_GET['fields'])) {
 
 $parameters = $_GET['parameters'];
 
+$bbox = $_GET['bbox'];
+
 $orderby    = $_GET['orderby'];
 
 if (empty($_GET['sort'])) {
@@ -58,16 +60,25 @@ $limit      = $_GET['limit'];
 $offset     = $_GET['offset'];
 
 # Connect to PostgreSQL database
-$conn = pg_connect("dbname='mydbname' user='myusername' password='mypassword' host='localhost'");
+$conn = pg_connect("dbname='bip' user='opengeo' password='opengeo' host='localhost' port='54321'");
 if (!$conn) {
     echo "Not connected : " . pg_error();
     exit;
 }
 
 # Build SQL SELECT statement and return the geometry as a GeoJSON element in EPSG: 4326
-$sql = "SELECT " . pg_escape_string($fields) . ", st_asgeojson(transform(" . pg_escape_string($geomfield) . ",$srid)) AS geojson FROM " . pg_escape_string($geotable);
+$sql = "SELECT " . pg_escape_string($fields) . ", st_asgeojson(st_transform(" . pg_escape_string($geomfield) . ",$srid)) AS geojson FROM " . pg_escape_string($geotable);
 if (strlen(trim($parameters)) > 0) {
     $sql .= " WHERE " . pg_escape_string($parameters);
+    #TODO: cater for the case there are parameters and a BBOX
+}
+else
+{
+    if (strlen(trim($bbox)) > 0) {
+        $bbox=trim($bbox);
+        $ca = split(",",$bbox);
+        $sql .= " WHERE ST_Intersects(ST_Envelope(ST_Union(ST_SetSRID(ST_Point(".$ca[0].",".$ca[1]."),4326),ST_SetSRID(ST_Point(".$ca[2].",".$ca[3]."),4326)))," . pg_escape_string($geomfield) .")"
+    }
 }
 if (strlen(trim($orderby)) > 0) {
     $sql .= " ORDER BY " . pg_escape_string($orderby) . " " . $sort;
