@@ -1,4 +1,4 @@
 solarsize
 =========
 
-A sizing model for solar PV systems.
+A web mapping application for solar PV siting, sizing and communication.
