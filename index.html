@@ -63,7 +63,7 @@
 	<script src="leaflet-plugins/layer/tile/Bing.js"></script>
 	<script>
 
-		var map;
+		var map, refreshBuildings, buildingVectorLayer;
 
 		function initmap() {
 			// Set up the map
@@ -72,28 +72,38 @@
 			var binglayer = new L.BingLayer('AgxcV_eHKN9sD_UzjdBKiXru-b_mGfIKjD1SkgR0zJhhGQAAKqFvTs442gc1Eaay','Aerial')
 				.addTo(map);
 
-			var geoJSONBBOXFeatures;
-			$.ajax({
-				type : 'GET',
-				dataType : 'json',
-				data: {
-					geotable:'osm_buildings',
-					geomfield:'the_geom',
-					fields:'osm_id as id,name',
-					limit: 500,
-					orderby:'ST_Distance(the_geom,ST_SetSRID(ST_Point('+map.getCenter().lng+','+map.getCenter().lat+'),4326))',
-					sort:'ASC'
-				},
-				url: 'ws/postgis_geojson.php?bbox=' + map.getBounds().toBBoxString(),
-				success : function(data) {
-					var geojsonFeature=data;
-					L.geoJson(geojsonFeature).addTo(map);
-				} 
-			});
+			refreshBuildings = function(){
+				// fetching the new features based on the new 
+				$.ajax({
+					type : 'GET',
+					dataType : 'json',
+					data: {
+						geotable:'osm_buildings',
+						geomfield:'the_geom',
+						fields:'osm_id,name',
+						limit: 200,
+						orderby:'ST_Distance(the_geom,ST_SetSRID(ST_Point('+map.getCenter().lng+','+map.getCenter().lat+'),4326))',
+						sort:'ASC'
+					},
+					url: 'ws/postgis_geojson.php?bbox=' + map.getBounds().toBBoxString(),
+					success : function(data) {
+						// Remove existing features from the layer
+						if (buildingVectorLayer)
+						{
+							map.removeLayer(buildingVectorLayer);
+						}
+						// Adding the new features
+						buildingVectorLayer = L.geoJson(data).addTo(map);
+					} 
+				});				
+			}
 
 		}
 
 		initmap();
+		map.on('dragend',refreshBuildings)
+		refreshBuildings();
+
 
 	</script>
 </body>

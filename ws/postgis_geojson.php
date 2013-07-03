@@ -67,7 +67,7 @@ if (!$conn) {
 }
 
 # Build SQL SELECT statement and return the geometry as a GeoJSON element in EPSG: 4326
-$sql = "SELECT " . pg_escape_string($fields) . ", st_asgeojson(st_transform(" . pg_escape_string($geomfield) . ",$srid)) AS geojson FROM " . pg_escape_string($geotable);
+$sql = "SELECT " . pg_escape_string($fields) . ", st_asgeojson(st_transform(" . pg_escape_string($geomfield) . ",$srid),5) AS geojson FROM " . pg_escape_string($geotable);
 if (strlen(trim($parameters)) > 0) {
     $sql .= " WHERE " . pg_escape_string($parameters);
     #TODO: cater for the case there are parameters and a BBOX
