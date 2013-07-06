@@ -39,6 +39,12 @@
 			margin-right: 10px;
 			margin-left: 0;
 		}
+		.modal{
+		    left: 254px;
+		    margin-left: 0;
+		    top: 110px;
+		    width: 360px;
+		}
 
 		/* Leaflet */		
 		.leaflet-container .leaflet-control-attribution {
@@ -67,7 +73,7 @@
 	<div class="row">
 		<div class="spanmap">
 			<div class="well" style="width: 592px;">
-				<div id="createBuildingModal" class="modal hide fade" data-backdrop="false">
+				<div id="createBuildingModal" class="modal hide" data-backdrop="false">
 				    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
 					<div class="modal-body">
 				    <form id="createBuildingForm">
@@ -158,16 +164,19 @@
 					}
 				},
 				edit: {
-					featureGroup: buildingVectorLayer,
-					edit: false
+					featureGroup: drawnItems,
+					edit: false,
+					remove: false
 				}
 			});
 
 			// Tooltip overrides before the control is added to the map
 			L.drawLocal.draw.toolbar.buttons.polygon = "Draw a building roof";
-			L.drawLocal.edit.toolbar.buttons.remove = "Delete a building roof";
+			///L.drawLocal.edit.toolbar.buttons.remove = "Delete a building roof";
 
 			map.addControl(drawControl);
+
+			$('#createBuildingModal').modal({show:false,backdrop:false});
 
 			map.on('draw:created', function (e) {
 				var type = e.layerType,
@@ -186,36 +195,12 @@
 				layerToCreate = layer;
 
 				// Opening up a Bootstrap modal
-				$('#createBuildingModal').modal('show',{backdrop:false});
+				$('#createBuildingModal').removeClass('hide');
 				$('#hiddenGeom').val(geomWKT);
 
-			});
-
-			map.on('draw:deleted', function (e) {
-				var layers = e.layers;
-				var labels = "";
-
-				// Building the label for the confirmation message
-				layers.eachLayer(function(l,idx){
-					if (l.feature.properties.name)
-					{
-						labels += l.feature.properties.name+",";
-					}
-					else
-					{
-						labels += l.feature.properties.id+",";
-					}
-				});
-				// Removing the last comma
-				labels=labels.substring(0,labels.length-1);
-
-				// Transforming the Leaflet layer into a WKT geometry ingestible by PostGIS
-				alert("Are you sure you want to delete these buildings? ("+labels+")");
-
-				// Updating the building status so that it is flagged as deleted, but it remains in the table?
+				map.addLayer(layerToCreate);
 
 			});
-
 
 			$('#createBuildingBtn').click(function(){
 				// To transmit:
@@ -228,17 +213,24 @@
 					data: formData,
 					url:'ws/insert_building.php',
 					success : function(data) {
+						// Reset form values for subsequent building creations
+						$('#createBuildingForm').each (function(){
+							this.reset();
+						});
+
+						// Display a small alert saying that the building has been successfully created
 						if (data.building_id)
 						{
-							// Display a small alert saying that the building has been successfully created
 							//alert("Building created with ID:"+data.building_id);
 						}
 						// Move to the new building: this will trigger the layer redraw and we don't need to keep the temporary drawn structure on the map!
 						map.fitBounds(layerToCreate.getBounds());
+						map.removeLayer(layerToCreate);
+						layerToCreate = null;
 					}
 				});
 
-				$('#createBuildingModal').hide();
+				$('#createBuildingModal').addClass('hide');
 			});
 
 			refreshBuildings = function(){
