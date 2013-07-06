@@ -51,8 +51,10 @@
 <body>
 	<div class="row">
 		<div class="spanmap">
-			<div class="well" style="width: 592px;">
-				Total roof area displayed: <p id="total_roof_area" style="display:inline;">calculating ...</p>
+			<div class="row">
+				<div class="well" style="width:140px;">
+					<p style="display:inline-block;font-size:12px;line-height:15px;text-align:center;">Total building area identified within the map:</p> <p id="total_roof_area" style="font-size:15px;text-align:center">calculating ...</p>
+				</div>
 			</div>
 		</div>
 	</div>
@@ -79,10 +81,43 @@
 
 		function initmap() {
 			// Set up the map
-			map = L.map('map').setView([-37.815,144.963], 16);
+			map = L.map('map').setView([-37.815,144.963], 16).on('removelayer',function(f){
+				alert("removing layer"+f);
+			});
 			// Create the Bing layer and add it to the map
 			var binglayer = new L.BingLayer('AgxcV_eHKN9sD_UzjdBKiXru-b_mGfIKjD1SkgR0zJhhGQAAKqFvTs442gc1Eaay','Aerial')
 				.addTo(map);
+
+			buildingVectorLayer = L.geoJson({features:[],type:"FeatureCollection"},{
+				//filter: function(feature){
+				//	return ('properties' in feature);
+				//},
+			    style: function (feature) {
+			    	var fcolor = 'red';
+			    	if (feature.properties.name)
+			    	{
+			    		fcolor = 'green';
+			    	}
+			        return {
+			        	color: fcolor,
+			        	weight: 3,
+			        	opacity: 0.3
+			    	};
+			    },
+			    onEachFeature: function (feature, layer) {
+			    	var feature_name = feature.properties.name;
+			    	totalRoofAreaDisplayed = totalRoofAreaDisplayed + parseInt(feature.properties.area_m2);
+			    	if (!feature_name)
+			    	{
+			    		feature_name = "Unknown";
+			    	}
+			    	var htmlArray = [];
+			    	htmlArray.push("<b>"+feature_name+"</b>");
+			    	htmlArray.push("<br>Approx area: "+numberWithCommas(feature.properties.area_m2)+" m<sup>2</sup>");
+			    	htmlArray.push("Zoom to <a href='#"+feature.properties.osm_id+"' onClick='zoomToBuilding("+feature.properties.osm_id+")'>this building</a>");
+			        layer.bindPopup(htmlArray.join("<br>"),{keepInView:true});
+			    }
+			}).addTo(map);
 
 			refreshBuildings = function(){
 				// Loading indicator
@@ -105,7 +140,7 @@
 						var new_ids = {};
 						for (f in data.features){
 							if (data.features.hasOwnProperty(f)) {
-								new_ids[data.features[f].properties.osm_id]=f;
+								new_ids[data.features[f].properties.osm_id]=true;
 							}	
 						}
 						// Remove existing features from the layer
@@ -114,45 +149,34 @@
 							//map.removeLayer(buildingVectorLayer);
 							for (f in buildingVectorLayer._layers)
 							{
-								if (buildingVectorLayer._layers[f].feature.properties.osm_id in new_ids)
+								var current_feature = buildingVectorLayer._layers[f];
+								if (current_feature.feature.properties.osm_id in new_ids)
 								{
-									data.features.splice(new_ids[buildingVectorLayer._layers[f].feature.properties.osm_id],1);
+									new_ids[current_feature.feature.properties.osm_id]=false;
 								}
 								else
 								{
-									delete buildingVectorLayer._layers[f];
+									// Deleting only this feature - clearLayers would remove all features
+									totalRoofAreaDisplayed = totalRoofAreaDisplayed - parseInt(current_feature.feature.properties.area_m2);
+									buildingVectorLayer.removeLayer(buildingVectorLayer._layers[f]);
 								}
 							}
-							totalRoofAreaDisplayed = 0;
 						}
+
+						// Only getting the features from data where new_ids is true
+						var data_trimmed = {features:[],type:"FeatureCollection"};
+						for (f in data.features)
+						{
+							if (data.features.hasOwnProperty(f)) {
+								if (new_ids[data.features[f].properties.osm_id])
+								{
+									data_trimmed.features.push(data.features[f]);
+								}
+							}
+						}
+
 						// Adding the new features
-						buildingVectorLayer = L.geoJson(data,{
-						    style: function (feature) {
-						    	var fcolor = 'red';
-						    	if (feature.properties.name)
-						    	{
-						    		fcolor = 'green';
-						    	}
-						        return {
-						        	color: fcolor,
-						        	weight: 3,
-						        	opacity: 0.3
-						    	};
-						    },
-						    onEachFeature: function (feature, layer) {
-						    	var feature_name = feature.properties.name;
-						    	totalRoofAreaDisplayed = totalRoofAreaDisplayed + parseInt(feature.properties.area_m2);
-						    	if (!feature_name)
-						    	{
-						    		feature_name = "Unknown";
-						    	}
-						    	var htmlArray = [];
-						    	htmlArray.push("<b>"+feature_name+"</b>");
-						    	htmlArray.push("<br>Approx area: "+numberWithCommas(feature.properties.area_m2)+" m<sup>2</sup>");
-						    	htmlArray.push("Zoom to <a href='#"+feature.properties.osm_id+"' onClick='zoomToBuilding("+feature.properties.osm_id+")'>this building</a>");
-						        layer.bindPopup(htmlArray.join("<br>"),{keepInView:true});
-						    }
-						}).addTo(map);
+						buildingVectorLayer.addData(data_trimmed);
 
 						// Refresh the total roof area displayed
 						$('#total_roof_area').html(numberWithCommas(totalRoofAreaDisplayed)+" m<sup>2</sup>");
