@@ -24,8 +24,35 @@ Load the data into the local structure:
 copy osm_buildings from '/path/to/file';
 
 
+-- danger zone: make sure this table does not already contain user-entered data!
+drop table building cascade;
+
+CREATE TABLE building
+(
+  id serial,
+  name text,
+  source text,
+  source_id integer,
+  the_geom geometry(Geometry,4326),
+  CONSTRAINT building_pk PRIMARY KEY (id)
+);
+
+CREATE INDEX building_geom_idx ON building USING gist (the_geom);
+
+insert into building (name,source,source_id,the_geom)
+select 
+coalesce(name,case building when 'yes' then '' else building end),
+cast('OSM' as text),
+osm_id,
+the_geom
+from osm_buildings;
+
+
+
 Loading the LGA data from the Vicmap datamart:
 http://www.data.vic.gov.au/raw_data/local-government-area-boundaries-property-polygon-vicmap-admin/2039
 
 then placing it into data/admin and loading it into the database:
 shp2pgsql -s 4283:4326 -I data/admin/LGA_POLYGON.shp lga | psql -p 54321 -d bip
+
+

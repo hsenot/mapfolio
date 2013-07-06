@@ -117,7 +117,7 @@
 			    	var htmlArray = [];
 			    	htmlArray.push("<b>"+feature_name+"</b>");
 			    	htmlArray.push("<br>Approx area: "+numberWithCommas(feature.properties.area_m2)+" m<sup>2</sup>");
-			    	htmlArray.push("Zoom to <a href='#"+feature.properties.osm_id+"' onClick='zoomToBuilding("+feature.properties.osm_id+")'>this building</a>");
+			    	htmlArray.push("Zoom to <a href='#"+feature.properties.id+"' onClick='zoomToBuilding("+feature.properties.id+")'>this building</a>");
 			        layer.bindPopup(htmlArray.join("<br>"),{keepInView:true});
 			    }
 			}).addTo(map);
@@ -183,20 +183,20 @@
 					type : 'GET',
 					dataType : 'json',
 					data: {
-						geotable:'osm_buildings',
+						geotable:'building',
 						geomfield:'the_geom',
-						fields:'osm_id,name,round(ST_Area(ST_Transform(the_geom,3111))::numeric,0) as area_m2,(select l.lga_code from lga l where ST_Intersects(ST_Centroid(the_geom),l.geom)) as lga',
+						fields:'id,name,round(ST_Area(ST_Transform(the_geom,3111))::numeric,0) as area_m2,(select l.lga_code from lga l where ST_Intersects(ST_Centroid(the_geom),l.geom)) as lga',
 						limit: 200,
 						orderby:'ST_Distance(the_geom,ST_SetSRID(ST_Point('+map.getCenter().lng+','+map.getCenter().lat+'),4326))',
 						sort:'ASC'
 					},
 					url: 'ws/postgis_geojson.php?bbox=' + map.getBounds().toBBoxString(),
 					success : function(data) {
-						// object made of osm_id
+						// object made of id
 						var new_ids = {};
 						for (f in data.features){
 							if (data.features.hasOwnProperty(f)) {
-								new_ids[data.features[f].properties.osm_id]=true;
+								new_ids[data.features[f].properties.id]=true;
 							}	
 						}
 						// Remove existing features from the layer
@@ -206,9 +206,9 @@
 							for (f in buildingVectorLayer._layers)
 							{
 								var current_feature = buildingVectorLayer._layers[f];
-								if (current_feature.feature.properties.osm_id in new_ids)
+								if (current_feature.feature.properties.id in new_ids)
 								{
-									new_ids[current_feature.feature.properties.osm_id]=false;
+									new_ids[current_feature.feature.properties.id]=false;
 								}
 								else
 								{
@@ -225,7 +225,7 @@
 						for (f in data.features)
 						{
 							if (data.features.hasOwnProperty(f)) {
-								if (new_ids[data.features[f].properties.osm_id])
+								if (new_ids[data.features[f].properties.id])
 								{
 									data_trimmed.features.push(data.features[f]);
 								}
@@ -251,7 +251,7 @@
 			// Assumption is that the building exists in the current vector layer
 			for (f in buildingVectorLayer._layers)
 			{
-				if (buildingVectorLayer._layers[f].feature.properties.osm_id==buildingId)
+				if (buildingVectorLayer._layers[f].feature.properties.id==buildingId)
 				{
 					buildingVectorLayer._layers[f].closePopup();
 					map.fitBounds(buildingVectorLayer._layers[f].getBounds());

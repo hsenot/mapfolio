@@ -14,6 +14,10 @@
  * @param 		string		$offset			Offset used in conjunction with limit *OPTIONAL*
  * @return 		string					resulting geojson string
  */
+
+require_once("database.inc.php");
+require_once("json.inc.php");
+
 function escapeJsonString($value) { # list from www.json.org: (\b backspace, \f formfeed)
   $escapers = array("\\", "/", "\"", "\n", "\r", "\t", "\x08", "\x0c");
   $replacements = array("\\\\", "\\/", "\\\"", "\\n", "\\r", "\\t", "\\f", "\\b");
@@ -60,7 +64,7 @@ $limit      = $_GET['limit'];
 $offset     = $_GET['offset'];
 
 # Connect to PostgreSQL database
-$conn = pg_connect("dbname='bip' user='opengeo' password='opengeo' host='localhost' port='54321'");
+$conn = pgConnection();
 if (!$conn) {
     echo "Not connected : " . pg_error();
     exit;
@@ -99,28 +103,6 @@ if (!$rs) {
 }
 
 # Build GeoJSON
-$output    = '';
-$rowOutput = '';
+echo rs2geojson($rs);
 
-while ($row = pg_fetch_assoc($rs)) {
-    $rowOutput = (strlen($rowOutput) > 0 ? ',' : '') . '{"type": "Feature", "geometry": ' . $row['geojson'] . ', "properties": {';
-    $props = '';
-    $id    = '';
-    foreach ($row as $key => $val) {
-        if ($key != "geojson") {
-            $props .= (strlen($props) > 0 ? ',' : '') . '"' . $key . '":"' . escapeJsonString($val) . '"';
-        }
-        if ($key == "id") {
-            $id .= ',"id":"' . escapeJsonString($val) . '"';
-        }
-    }
-    
-    $rowOutput .= $props . '}';
-    $rowOutput .= $id;
-    $rowOutput .= '}';
-    $output .= $rowOutput;
-}
-
-$output = '{ "type": "FeatureCollection", "features": [ ' . $output . ' ]}';
-echo $output;
 ?>
