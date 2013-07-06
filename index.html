@@ -151,7 +151,10 @@
 					edit: false
 				}
 			});
+
+			// Tooltip overrides before the control is added to the map
 			L.drawLocal.draw.toolbar.buttons.polygon = "Draw a building roof";
+			L.drawLocal.edit.toolbar.buttons.remove = "Delete a building roof";
 
 			map.addControl(drawControl);
 
