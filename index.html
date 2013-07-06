@@ -6,7 +6,11 @@
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link href="bootstrap/css/bootstrap.min.css" rel="stylesheet" media="screen">
 	<link rel="stylesheet" href="leaflet/leaflet.css" />
-	<!--[if lte IE 8]><link rel="stylesheet" href="../dist/leaflet.ie.css" /><![endif]-->
+	<link rel="stylesheet" href="leaflet.draw/leaflet.draw.css" />
+	<!--[if lte IE 8]>
+		<link rel="stylesheet" href="leaflet.ie.css" />
+		<link rel="stylesheet" href="leaflet.draw/leaflet.draw.ie.css" />
+	<![endif]-->
 	<style>
 		/* Base HTML */
 		body {
@@ -71,10 +75,12 @@
     <script src="bootstrap/js/bootstrap.min.js"></script>
 	<script src="leaflet/leaflet.js"></script>
 	<script src="leaflet-plugins/layer/tile/Bing.js"></script>
+	<script src="leaflet.draw/leaflet.draw.js"></script>
 	<script>
 
-		var map, refreshBuildings, buildingVectorLayer, totalRoofAreaDisplayed = 0, zoomToBuilding;
-
+		var map, refreshBuildings, buildingVectorLayer, totalRoofAreaDisplayed = 0, zoomToBuilding, drawnItems;
+		// Removed: 'black'
+		var css_colors = ['aqua', 'blue', 'fuchsia', 'gray', 'green', 'lime', 'maroon', 'navy', 'olive', 'orange', 'purple', 'red', 'silver', 'teal', 'white', 'yellow'];
 		function numberWithCommas(x) {
 		    return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
 		}
@@ -89,14 +95,11 @@
 				.addTo(map);
 
 			buildingVectorLayer = L.geoJson({features:[],type:"FeatureCollection"},{
-				//filter: function(feature){
-				//	return ('properties' in feature);
-				//},
 			    style: function (feature) {
 			    	var fcolor = 'red';
-			    	if (feature.properties.name)
+			    	if (feature.properties.lga)
 			    	{
-			    		fcolor = 'green';
+			    		fcolor = css_colors[parseInt(feature.properties.lga) % css_colors.length];
 			    	}
 			        return {
 			        	color: fcolor,
@@ -119,6 +122,56 @@
 			    }
 			}).addTo(map);
 
+			drawnItems = new L.FeatureGroup();
+			map.addLayer(drawnItems);
+
+			var drawControl = new L.Control.Draw({
+				draw: {
+					// Other positions just don't work
+					position: 'topleft',
+					polyline:false,
+					rectangle:false,
+					circle:false,
+					marker:false,
+					polygon: {
+						title: 'Draw a building',
+						allowIntersection: false,
+						drawError: {
+							color: '#b00b00',
+							timeout: 1000
+						},
+						shapeOptions: {
+							color: '#bada55'
+						},
+						showArea: false
+					}
+				},
+				edit: {
+					featureGroup: drawnItems,
+					edit: false
+				}
+			});
+			L.drawLocal.draw.toolbar.buttons.polygon = "Draw a building roof";
+
+			map.addControl(drawControl);
+
+			map.on('draw:created', function (e) {
+				var type = e.layerType,
+					layer = e.layer;
+
+				if (type === 'polygon') {
+					layer.bindPopup('A popup!');
+				}
+
+				// Here, we probably need to insert it into the database
+				// Same table or different table? Same table might be easier for the app but will need special management when refreshing the OSM buildings and backups
+				// To avoid disaster of drawn data being wiped out, we probably will need a separate table
+
+				drawnItems.addLayer(layer);
+
+				// Move to the center of the new building: this will trigger the layer redraw and we don't need to keep the temporary drawn structure on the map!
+			});
+
 			refreshBuildings = function(){
 				// Loading indicator
 				$('#total_roof_area').html("calculating ...");
@@ -129,7 +182,7 @@
 					data: {
 						geotable:'osm_buildings',
 						geomfield:'the_geom',
-						fields:'osm_id,name,round(ST_Area(ST_Transform(the_geom,3111))::numeric,0) as area_m2',
+						fields:'osm_id,name,round(ST_Area(ST_Transform(the_geom,3111))::numeric,0) as area_m2,(select l.lga_code from lga l where ST_Intersects(ST_Centroid(the_geom),l.geom)) as lga',
 						limit: 200,
 						orderby:'ST_Distance(the_geom,ST_SetSRID(ST_Point('+map.getCenter().lng+','+map.getCenter().lat+'),4326))',
 						sort:'ASC'
@@ -156,8 +209,9 @@
 								}
 								else
 								{
-									// Deleting only this feature - clearLayers would remove all features
+									// Updating roof area by substracting the areas of features we remove
 									totalRoofAreaDisplayed = totalRoofAreaDisplayed - parseInt(current_feature.feature.properties.area_m2);
+									// Deleting only this feature - clearLayers would remove all features
 									buildingVectorLayer.removeLayer(buildingVectorLayer._layers[f]);
 								}
 							}
