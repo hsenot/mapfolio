@@ -22,3 +22,10 @@ Unzip
 
 Load the data into the local structure:
 copy osm_buildings from '/path/to/file';
+
+
+Loading the LGA data from the Vicmap datamart:
+http://www.data.vic.gov.au/raw_data/local-government-area-boundaries-property-polygon-vicmap-admin/2039
+
+then placing it into data/admin and loading it into the database:
+shp2pgsql -s 4283:4326 -I data/admin/LGA_POLYGON.shp lga | psql -p 54321 -d bip
