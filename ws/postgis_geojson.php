@@ -81,7 +81,7 @@ else
     if (strlen(trim($bbox)) > 0) {
         $bbox=trim($bbox);
         $ca = split(",",$bbox);
-        $sql .= " WHERE ST_Intersects(ST_Envelope(ST_Union(ST_SetSRID(ST_Point(".$ca[0].",".$ca[1]."),4326),ST_SetSRID(ST_Point(".$ca[2].",".$ca[3]."),4326)))," . pg_escape_string($geomfield) .")"
+        $sql .= " WHERE ST_Intersects(ST_Envelope(ST_Union(ST_SetSRID(ST_Point(".$ca[0].",".$ca[1]."),4326),ST_SetSRID(ST_Point(".$ca[2].",".$ca[3]."),4326)))," . pg_escape_string($geomfield) .")";
     }
 }
 if (strlen(trim($orderby)) > 0) {
