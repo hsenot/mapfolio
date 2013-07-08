@@ -243,8 +243,8 @@
 					data: {
 						geotable:'building',
 						geomfield:'the_geom',
-						fields:'id,name,round(ST_Area(ST_Transform(the_geom,3111))::numeric,0) as area_m2,(select l.lga_code from lga l where ST_Intersects(ST_Centroid(the_geom),l.geom)) as lga',
-						limit: 200,
+						fields:'id,name,round(ST_Area(ST_Transform(the_geom,3111))::numeric,0) as area_m2',
+						limit: 100,
 						orderby:'ST_Distance(the_geom,ST_SetSRID(ST_Point('+map.getCenter().lng+','+map.getCenter().lat+'),4326))',
 						sort:'ASC'
 					},

@@ -93,7 +93,11 @@ if (strlen(trim($limit)) > 0) {
 if (strlen(trim($offset)) > 0) {
     $sql .= " OFFSET " . pg_escape_string($offset);
 }
-//echo $sql;
+
+if (isset($_REQUEST['debug']))
+{
+    echo $sql."\n";
+}
 
 # Try query or error
 $rs = pg_query($conn, $sql);
