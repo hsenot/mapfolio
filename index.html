@@ -241,7 +241,7 @@
 					type : 'GET',
 					dataType : 'json',
 					data: {
-						geotable:'building',
+						geotable:'community.building',
 						geomfield:'the_geom',
 						fields:'id,name,round(ST_Area(ST_Transform(the_geom,3111))::numeric,0) as area_m2',
 						limit: 100,
