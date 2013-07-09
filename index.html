@@ -79,10 +79,19 @@
 				    <form id="createBuildingForm">
 						<input type="text" id="buildingName" name="name" placeholder="Building name">
 						<input type="hidden" id="hiddenGeom" name="geom" value="">
-						<button type="button" id="createBuildingBtn" class="btn">Submit</button>
+						<button type="button" id="createBuildingBtn" class="btn">Create</button>
 				    </form>
 				  </div>
 				</div>
+
+				<div id="deleteBuildingModal" class="modal hide" data-backdrop="false">
+				    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+					<div class="modal-body">
+					Are you sure you want to delete this building?
+					<button type="button" id="deleteBuildingBtn" class="btn">Yes</button>
+				  </div>
+				</div>
+
 				<div id="map" style="width: 592px; height: 592px; border: 1px;"></div>
 			</div>
 		</div>
@@ -95,7 +104,7 @@
 	<script src="leaflet.draw/leaflet.draw.js"></script>
 	<script>
 
-		var map, refreshBuildings, buildingVectorLayer, totalRoofAreaDisplayed = 0, zoomToBuilding, drawnItems, layerToCreate;
+		var map, refreshBuildings, buildingVectorLayer, totalRoofAreaDisplayed = 0, zoomToBuilding, drawnItems, layerToCreate, layersToDelete;
 		// Removed: 'black'
 		var css_colors = ['aqua', 'blue', 'fuchsia', 'gray', 'green', 'lime', 'maroon', 'navy', 'olive', 'orange', 'purple', 'red', 'silver', 'teal', 'white', 'yellow'];
 		function numberWithCommas(x) {
@@ -164,9 +173,8 @@
 					}
 				},
 				edit: {
-					featureGroup: drawnItems,
-					edit: false,
-					remove: false
+					featureGroup: buildingVectorLayer,
+					edit: false
 				}
 			});
 
@@ -200,6 +208,39 @@
 
 				map.addLayer(layerToCreate);
 
+			});
+
+			map.on('draw:deleted', function (e) {
+				var layers = e.layers;
+
+				// Passing the layer to create as a global
+				layersToDelete = layers;
+
+				// Opening up a Bootstrap modal
+				$('#deleteBuildingModal').removeClass('hide');
+
+			});	
+
+			$('#deleteBuildingBtn').click(function(){
+				var buildingIdList='';
+				layersToDelete.eachLayer(function(l){
+					buildingIdList += l.feature.id+",";
+				});
+				buildingIdList = buildingIdList.substring(0,buildingIdList.length-1);
+				// Sending the building with its name and other elements to the create service
+				$.ajax({
+					type : 'POST',
+					dataType : 'json',
+					data: {'building_ids': buildingIdList},
+					url:'ws/delete_building.php',
+					success : function(data) {
+						// Tidying up the client
+						map.removeLayer(layersToDelete);
+						layersToDelete = null;
+					}
+				});
+
+				$('#deleteBuildingModal').addClass('hide');
 			});
 
 			$('#createBuildingBtn').click(function(){
