@@ -29,12 +29,13 @@ try {
 	$pgconn = pgConnection();
 
 	// Inserting the observation
-	$sql = "INSERT INTO building(name,source,source_id,the_geom) VALUES ('".$p_name."','USER',0,ST_GeomFromText('".$p_geom."',4326));";
+	// Status: 0 => imported, 1=> created by user, 2 => deleted
+	$sql = "INSERT INTO community.building(name,source_id,status,the_geom) VALUES ('".$p_name."',0,1,ST_GeomFromText('".$p_geom."',4326));";
 	//echo $sql;
 	pg_query($pgconn,$sql);
 
     // Getting the building number (somehow curr_val does not always work)
-	$sql = "SELECT currval('building_id_seq') as c";
+	$sql = "SELECT currval('community.building_id_seq') as c";
 	//echo $sql;
 	$recordSet = pg_query($pgconn,$sql);
 

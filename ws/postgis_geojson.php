@@ -72,17 +72,18 @@ if (!$conn) {
 
 # Build SQL SELECT statement and return the geometry as a GeoJSON element in EPSG: 4326
 $sql = "SELECT " . pg_escape_string($fields) . ", st_asgeojson(st_transform(" . pg_escape_string($geomfield) . ",$srid),5) AS geojson FROM " . pg_escape_string($geotable);
+if (strlen(trim($bbox)) > 0) {
+    $bbox=trim($bbox);
+    $ca = split(",",$bbox);
+    $sql_bbox = "ST_Intersects(ST_Envelope(ST_Union(ST_SetSRID(ST_Point(".$ca[0].",".$ca[1]."),4326),ST_SetSRID(ST_Point(".$ca[2].",".$ca[3]."),4326)))," . pg_escape_string($geomfield) .")";
+}
 if (strlen(trim($parameters)) > 0) {
-    $sql .= " WHERE " . pg_escape_string($parameters);
-    #TODO: cater for the case there are parameters and a BBOX
+    if ($sql_bbox)
+    $sql .= " WHERE " . pg_escape_string($parameters) ." AND ".$sql_bbox;
 }
 else
 {
-    if (strlen(trim($bbox)) > 0) {
-        $bbox=trim($bbox);
-        $ca = split(",",$bbox);
-        $sql .= " WHERE ST_Intersects(ST_Envelope(ST_Union(ST_SetSRID(ST_Point(".$ca[0].",".$ca[1]."),4326),ST_SetSRID(ST_Point(".$ca[2].",".$ca[3]."),4326)))," . pg_escape_string($geomfield) .")";
-    }
+    $sql .= " WHERE ".$sql_bbox;
 }
 if (strlen(trim($orderby)) > 0) {
     $sql .= " ORDER BY " . pg_escape_string($orderby) . " " . $sort;
@@ -102,6 +103,7 @@ if (isset($_REQUEST['debug']))
 # Try query or error
 $rs = pg_query($conn, $sql);
 if (!$rs) {
+    echo $sql;
     echo "An SQL error occured.\n";
     exit;
 }

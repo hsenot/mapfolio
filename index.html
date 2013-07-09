@@ -243,6 +243,8 @@
 					data: {
 						geotable:'community.building',
 						geomfield:'the_geom',
+						// Status: 0 => imported, 1=> created by user, 2 => deleted
+						parameters:'status <> 2',
 						fields:'id,name,round(ST_Area(ST_Transform(the_geom,3111))::numeric,0) as area_m2',
 						limit: 100,
 						orderby:'ST_Distance(the_geom,ST_SetSRID(ST_Point('+map.getCenter().lng+','+map.getCenter().lat+'),4326))',
