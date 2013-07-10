@@ -5,6 +5,7 @@
 	<meta charset="utf-8" />
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link href="bootstrap/css/bootstrap.min.css" rel="stylesheet" media="screen">
+    <link href="bootstrap/tag-manager/bootstrap-tagmanager.css" rel="stylesheet">
 	<link rel="stylesheet" href="leaflet/leaflet.css" />
 	<link rel="stylesheet" href="leaflet.draw/leaflet.draw.css" />
 	<!--[if lte IE 8]>
@@ -46,6 +47,11 @@
 		    width: 360px;
 		}
 
+		/* Bootstrap tag manager */
+		input.tm-input[type="text"] {
+		    margin-bottom: 5px;
+		    width: 120px;
+		}
 		/* Leaflet */		
 		.leaflet-container .leaflet-control-attribution {
 			font-size: 8px;
@@ -77,8 +83,13 @@
 				    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
 					<div class="modal-body">
 				    <form id="createBuildingForm">
-						<input type="text" id="buildingName" name="name" placeholder="Building name">
-						<input type="hidden" id="hiddenGeom" name="geom" value="">
+				    	<fieldset>
+							<input type="text" id="buildingName" name="name" placeholder="Building name">
+							<br>
+							<input type="text" name="tags" placeholder="Tags" class="tm-input"/>
+							<br>
+							<input type="hidden" id="hiddenGeom" name="geom" value="">
+						</fieldset>
 						<button type="button" id="createBuildingBtn" class="btn">Create</button>
 				    </form>
 				  </div>
@@ -99,6 +110,7 @@
 
     <script src="http://code.jquery.com/jquery.js"></script>
     <script src="bootstrap/js/bootstrap.min.js"></script>
+    <script src="bootstrap/tag-manager/bootstrap-tagmanager.js"></script>
 	<script src="leaflet/leaflet.js"></script>
 	<script src="leaflet-plugins/layer/tile/Bing.js"></script>
 	<script src="leaflet.draw/leaflet.draw.js"></script>
@@ -210,6 +222,36 @@
 
 			});
 
+			$('#createBuildingBtn').click(function(){
+				// To transmit:
+				var formData = $('#createBuildingForm').serialize();
+
+				// Sending the building with its name and other elements to the create service
+				$.ajax({
+					type : 'POST',
+					dataType : 'json',
+					data: formData,
+					url:'ws/insert_building.php',
+					success : function(data) {
+						// Reset form values for subsequent building creations
+						$('#createBuildingForm').each (function(){
+							this.reset();
+						});
+
+						// Display a small alert saying that the building has been successfully created
+						if (data.building_id)
+						{
+							//alert("Building created with ID:"+data.building_id);
+						}
+						// Move to the new building: this will trigger the layer redraw and we don't need to keep the temporary drawn structure on the map!
+						map.fitBounds(layerToCreate.getBounds());
+						map.removeLayer(layerToCreate);
+						layerToCreate = null;
+					}
+				});
+
+				$('#createBuildingModal').addClass('hide');
+			});
 			map.on('draw:deleted', function (e) {
 				var layers = e.layers;
 
@@ -241,37 +283,6 @@
 				});
 
 				$('#deleteBuildingModal').addClass('hide');
-			});
-
-			$('#createBuildingBtn').click(function(){
-				// To transmit:
-				var formData = $('#createBuildingForm').serialize();
-
-				// Sending the building with its name and other elements to the create service
-				$.ajax({
-					type : 'POST',
-					dataType : 'json',
-					data: formData,
-					url:'ws/insert_building.php',
-					success : function(data) {
-						// Reset form values for subsequent building creations
-						$('#createBuildingForm').each (function(){
-							this.reset();
-						});
-
-						// Display a small alert saying that the building has been successfully created
-						if (data.building_id)
-						{
-							//alert("Building created with ID:"+data.building_id);
-						}
-						// Move to the new building: this will trigger the layer redraw and we don't need to keep the temporary drawn structure on the map!
-						map.fitBounds(layerToCreate.getBounds());
-						map.removeLayer(layerToCreate);
-						layerToCreate = null;
-					}
-				});
-
-				$('#createBuildingModal').addClass('hide');
 			});
 
 			refreshBuildings = function(){
@@ -347,6 +358,7 @@
 		initmap();
 		map.on('moveend',refreshBuildings)
 		refreshBuildings();
+		$(".tm-input").tagsManager();
 
 		zoomToBuilding = function(buildingId){ 
 			// Assumption is that the building exists in the current vector layer

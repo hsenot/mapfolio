@@ -17,6 +17,7 @@ function sanitizeTextParameter ($p) {
 try {
 	$p_name = isset($_REQUEST['name']) ? $_REQUEST['name'] : '';
 	$p_name = sanitizeTextParameter($p_name);
+	$p_tags = isset($_REQUEST['hidden-tags']) ? $_REQUEST['hidden-tags'] : '';
 	$p_geom = isset($_REQUEST['geom']) ? $_REQUEST['geom'] : '';
 }
 catch (Exception $e) {
