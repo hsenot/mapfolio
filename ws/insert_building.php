@@ -53,7 +53,8 @@ try {
 
 	// Now, associate the tags to the building
 	// It is assumed here that the tags already exist in the tag table
-	$sql = "INSERT INTO community.tag_building(tag_id,building_id) SELECT t.id,".$building_id." FROM community.tag WHERE label in (".$p_tags_list.")";
+	$sql = "INSERT INTO community.tag_building(tag_id,building_id) SELECT t.id,".$building_id." FROM community.tag t WHERE t.label in (".$p_tags_list.")";
+	//echo $sql;
 	$recordSet = $pgconn->prepare($sql);
 	$recordSet->execute();
 
