@@ -24,6 +24,10 @@ function escapeJsonString($value) { # list from www.json.org: (\b backspace, \f 
   $result = str_replace($escapers, $replacements, $value);
   return $result;
 }
+
+function my_pg_escape_string($t) {
+    return $t;
+}
  
 # Retrive URL variables
 if (empty($_GET['geotable'])) {
@@ -71,28 +75,28 @@ if (!$conn) {
 }
 
 # Build SQL SELECT statement and return the geometry as a GeoJSON element in EPSG: 4326
-$sql = "SELECT " . pg_escape_string($fields) . ", st_asgeojson(st_transform(" . pg_escape_string($geomfield) . ",$srid),5) AS geojson FROM " . pg_escape_string($geotable);
+$sql = "SELECT " . my_pg_escape_string($fields) . ", st_asgeojson(st_transform(" . my_pg_escape_string($geomfield) . ",$srid),5) AS geojson FROM " . my_pg_escape_string($geotable);
 if (strlen(trim($bbox)) > 0) {
     $bbox=trim($bbox);
     $ca = split(",",$bbox);
-    $sql_bbox = "ST_Intersects(ST_Envelope(ST_Union(ST_SetSRID(ST_Point(".$ca[0].",".$ca[1]."),4326),ST_SetSRID(ST_Point(".$ca[2].",".$ca[3]."),4326)))," . pg_escape_string($geomfield) .")";
+    $sql_bbox = "ST_Intersects(ST_Envelope(ST_Union(ST_SetSRID(ST_Point(".$ca[0].",".$ca[1]."),4326),ST_SetSRID(ST_Point(".$ca[2].",".$ca[3]."),4326)))," . my_pg_escape_string($geomfield) .")";
 }
 if (strlen(trim($parameters)) > 0) {
     if ($sql_bbox)
-    $sql .= " WHERE " . pg_escape_string($parameters) ." AND ".$sql_bbox;
+    $sql .= " WHERE " . my_pg_escape_string($parameters) ." AND ".$sql_bbox;
 }
 else
 {
     $sql .= " WHERE ".$sql_bbox;
 }
 if (strlen(trim($orderby)) > 0) {
-    $sql .= " ORDER BY " . pg_escape_string($orderby) . " " . $sort;
+    $sql .= " ORDER BY " . my_pg_escape_string($orderby) . " " . $sort;
 }
 if (strlen(trim($limit)) > 0) {
-    $sql .= " LIMIT " . pg_escape_string($limit);
+    $sql .= " LIMIT " . my_pg_escape_string($limit);
 }
 if (strlen(trim($offset)) > 0) {
-    $sql .= " OFFSET " . pg_escape_string($offset);
+    $sql .= " OFFSET " . my_pg_escape_string($offset);
 }
 
 if (isset($_REQUEST['debug']))
@@ -101,14 +105,15 @@ if (isset($_REQUEST['debug']))
 }
 
 # Try query or error
-$rs = pg_query($conn, $sql);
-if (!$rs) {
+$recordSet = $conn->prepare($sql);
+$recordSet->execute();
+if (!$recordSet) {
     echo $sql;
     echo "An SQL error occured.\n";
     exit;
 }
 
 # Build GeoJSON
-echo rs2geojson($rs);
+echo rs2geojson($recordSet);
 
 ?>

@@ -358,7 +358,11 @@
 		initmap();
 		map.on('moveend',refreshBuildings)
 		refreshBuildings();
-		$(".tm-input").tagsManager();
+		$(".tm-input").tagsManager({
+			typeahead: true,
+			typeaheadAjaxSource: 'ws/tag_list.php',
+			typeaheadAjaxPolling: true
+		});
 
 		zoomToBuilding = function(buildingId){ 
 			// Assumption is that the building exists in the current vector layer

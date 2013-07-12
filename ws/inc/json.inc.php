@@ -16,7 +16,8 @@ function rs2geojson($rs)
 	$output    = '';
 	$rowOutput = '';
 
-	while ($row = pg_fetch_assoc($rs)) {
+	while ($row  = $rs->fetch(PDO::FETCH_ASSOC))
+	{
 	    $rowOutput = (strlen($rowOutput) > 0 ? ',' : '') . '{"type": "Feature", "geometry": ' . $row['geojson'] . ', "properties": {';
 	    $props = '';
 	    $id    = '';
@@ -40,7 +41,7 @@ function rs2geojson($rs)
 }
 
 
-function rs2json($rs)
+function rs2json($rs,$root)
 {
 	if (!$rs) {
 		trigger_error("Caught Exception: bad recordset passed to rs2json function.", E_USER_ERROR);
@@ -84,7 +85,7 @@ function rs2json($rs)
 	$output .= '}';
 
     //Total rows
-    $output = '{"total_rows":"' . $rowCounter . '","rows":'.$output;
+    $output = '{"'.$root.'":'.$output;
 
 	//For jsonp
 	if (isset($_REQUEST['callback'])) {

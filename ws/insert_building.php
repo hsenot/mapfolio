@@ -18,6 +18,9 @@ try {
 	$p_name = isset($_REQUEST['name']) ? $_REQUEST['name'] : '';
 	$p_name = sanitizeTextParameter($p_name);
 	$p_tags = isset($_REQUEST['hidden-tags']) ? $_REQUEST['hidden-tags'] : '';
+	$p_tags_arr=explode(",",$p_tags);
+	# Merging back the array and adding the quotes
+	$p_tags_list="'".implode("','",$p_tags_arr)."'";
 	$p_geom = isset($_REQUEST['geom']) ? $_REQUEST['geom'] : '';
 }
 catch (Exception $e) {
@@ -33,18 +36,26 @@ try {
 	// Status: 0 => imported, 1=> created by user, 2 => deleted
 	$sql = "INSERT INTO community.building(name,source_id,status,the_geom) VALUES ('".$p_name."',0,1,ST_GeomFromText('".$p_geom."',4326));";
 	//echo $sql;
-	pg_query($pgconn,$sql);
+	$recordSet = $pgconn->prepare($sql);
+	$recordSet->execute();
 
     // Getting the building number (somehow curr_val does not always work)
 	$sql = "SELECT currval('community.building_id_seq') as c";
 	//echo $sql;
-	$recordSet = pg_query($pgconn,$sql);
+	$recordSet = $pgconn->prepare($sql);
+	$recordSet->execute();
 
-	while ($row  = pg_fetch_assoc($recordSet))
+	while ($row  = $recordSet->fetch(PDO::FETCH_ASSOC))
 	{
 		// Have to name the column instead of using index 0 to indicate 1st column
 		$building_id = $row['c'];
 	}
+
+	// Now, associate the tags to the building
+	// It is assumed here that the tags already exist in the tag table
+	$sql = "INSERT INTO community.tag_building(tag_id,building_id) SELECT t.id,".$building_id." FROM community.tag WHERE label in (".$p_tags_list.")";
+	$recordSet = $pgconn->prepare($sql);
+	$recordSet->execute();
 
 	exit('{"success":"true","building_id":"'.$building_id.'"}');
 }

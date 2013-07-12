@@ -25,7 +25,8 @@ try {
 	// Status: 0 => imported, 1=> created by user, 2 => deleted
 	$sql = "UPDATE community.building SET status=2 WHERE id in (".$p_building_ids.")";
 	//echo $sql;
-	pg_query($pgconn,$sql);
+	$recordSet = $pgconn->prepare($sql);
+	$recordSet->execute();
 
 	exit('{"success":"true","building_ids":"'.$p_building_ids.'"}');
 }
