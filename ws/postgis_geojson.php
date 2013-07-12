@@ -15,8 +15,8 @@
  * @return 		string					resulting geojson string
  */
 
-require_once("database.inc.php");
-require_once("json.inc.php");
+require_once("inc/database.inc.php");
+require_once("inc/json.inc.php");
 
 function escapeJsonString($value) { # list from www.json.org: (\b backspace, \f formfeed)
   $escapers = array("\\", "/", "\"", "\n", "\r", "\t", "\x08", "\x0c");

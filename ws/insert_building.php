@@ -5,8 +5,8 @@
  */
 
 # Includes
-require_once("database.inc.php");
-require_once("json.inc.php");
+require_once("inc/database.inc.php");
+require_once("inc/json.inc.php");
 
 # Helper function to process user entered text
 function sanitizeTextParameter ($p) {
@@ -42,7 +42,7 @@ try {
 
 	while ($row  = pg_fetch_assoc($recordSet))
 	{
-		// Have to name the column instead of using 0 to indicate 1st column
+		// Have to name the column instead of using index 0 to indicate 1st column
 		$building_id = $row['c'];
 	}
 

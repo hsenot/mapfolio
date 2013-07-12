@@ -5,8 +5,8 @@
  */
 
 # Includes
-require_once("database.inc.php");
-require_once("json.inc.php");
+require_once("inc/database.inc.php");
+require_once("inc/json.inc.php");
 
 # Retrieve URL arguments
 try {
