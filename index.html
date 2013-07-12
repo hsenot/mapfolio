@@ -62,6 +62,10 @@
 			text-align: center;
 		}
 
+		.inlineblock {
+			display: inline-block;
+		}
+
 	</style>
 </head>
 <body>
@@ -69,9 +73,14 @@
 	<div class="row">
 		<div class="spanmap">
 			<div class="row">
-				<div class="well" style="width:140px;">
+				<div class="well inlineblock" style="width:140px;">
 					<p style="display:inline-block;font-size:12px;line-height:15px;text-align:center;">Total building area identified within the map:</p> <p id="total_roof_area" style="font-size:15px;text-align:center">calculating ...</p>
 				</div>
+
+				<div id="tagTally" class="well inlineblock" style="margin-left:4px;width:425px;vertical-align:top;">
+					Loading tags ...
+				</div>
+
 			</div>
 		</div>
 	</div>
@@ -363,6 +372,28 @@
 			typeaheadAjaxSource: 'ws/tag_list.php',
 			typeaheadAjaxPolling: true
 		});
+
+		// List the tags and their respective weight
+		refreshTagTally = function(){
+			// Refreshing the tally of tags
+			$.ajax({
+				type : 'GET',
+				dataType : 'json',
+				url:'ws/tag_count.php',
+				success : function(data) {
+					var tagTally='';
+					// Tidying up the client
+					for (i=0;i<data.rows.length;i++)
+					{
+						tagTally += "<button class='btn btn-mini btn-primary' type='button'>" + data.rows[i].label + "</button> X " + data.rows[i].c + "&nbsp;&nbsp;&nbsp;";
+					}
+					// Injecting
+					$('#tagTally').html(tagTally);
+				}
+			});
+		};
+
+		refreshTagTally();
 
 		zoomToBuilding = function(buildingId){ 
 			// Assumption is that the building exists in the current vector layer
