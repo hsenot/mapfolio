@@ -18,10 +18,12 @@
 			margin:10px;
 		}
 		form {
-			margin: 10px;
+			margin: 0px;
 		}
 		input[type="text"] {
-			font-size:12px;
+		    font-size: 11px;
+		    height: 12px;
+		    margin-bottom: 2px;
 		}
 
 		/* Bootstrap */
@@ -47,14 +49,19 @@
 		    width: 360px;
 		}
 
-		/* Bootstrap tag manager */
-		input.tm-input[type="text"] {
-		    margin-bottom: 5px;
-		    width: 120px;
-		}
 		/* Leaflet */		
 		.leaflet-container .leaflet-control-attribution {
 			font-size: 8px;
+		}
+
+		.tm-input {
+			width:50px;
+		}
+
+		.tm-tag {
+			color: #FFFFFF;
+			text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.25);
+			font-size: 10px;
 		}
 
 		/* Misc */
@@ -88,6 +95,7 @@
 	<div class="row">
 		<div class="spanmap">
 			<div class="well" style="width: 592px;">
+				<!--
 				<div id="createBuildingModal" class="modal hide" data-backdrop="false">
 				    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
 					<div class="modal-body">
@@ -103,7 +111,7 @@
 				    </form>
 				  </div>
 				</div>
-
+				-->
 				<div id="deleteBuildingModal" class="modal hide" data-backdrop="false">
 				    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
 					<div class="modal-body">
@@ -125,7 +133,7 @@
 	<script src="leaflet.draw/leaflet.draw.js"></script>
 	<script>
 
-		var map, refreshBuildings, buildingVectorLayer, totalRoofAreaDisplayed = 0, zoomToBuilding, drawnItems, layerToCreate, layersToDelete;
+		var map, refreshBuildings, buildingVectorLayer, buildingDetailsJSON, totalRoofAreaDisplayed = 0, moveToBuilding, drawnItems, layerToCreate, layersToDelete, editBuildingDetails;
 		// Removed: 'black'
 		var css_colors = ['aqua', 'blue', 'fuchsia', 'gray', 'green', 'lime', 'maroon', 'navy', 'olive', 'orange', 'purple', 'red', 'silver', 'teal', 'white', 'yellow'];
 		function numberWithCommas(x) {
@@ -162,12 +170,42 @@
 			    		feature_name = "Unknown";
 			    	}
 			    	var htmlArray = [];
-			    	htmlArray.push("<b>"+feature_name+"</b>");
-			    	htmlArray.push("<br>Approx area: "+numberWithCommas(feature.properties.area_m2)+" m<sup>2</sup>");
-			    	htmlArray.push("Zoom to <a href='#"+feature.properties.id+"' onClick='zoomToBuilding("+feature.properties.id+")'>this building</a>");
-			        layer.bindPopup(htmlArray.join("<br>"),{keepInView:true});
+			    	htmlArray.push("<div id='selectedBuildingExtraProperties'><img src='ajax-loader.gif'></div>");
+			    	htmlArray.push(	"<a class='btn btn-mini' href='#"+feature.properties.id+"' onClick='moveToBuilding("+feature.properties.id+",'zoom')'>Zoom</a>&nbsp;"+
+			    					"<a class='btn btn-mini' href='#"+feature.properties.id+"' onClick='editBuildingDetails("+feature.properties.id+")'>Edit</a>&nbsp;"+
+			    					"<a class='btn btn-mini' href='#"+feature.properties.id+"' onClick='deleteBuilding("+feature.properties.id+")'>Delete</a>");
+			        layer.bindPopup(htmlArray.join("<br>"),{keepInView:true,minWidth:250});
 			    }
 			}).addTo(map);
+
+			map.on('popupopen', function(e) {
+				// ID of the building whose popup is open
+				var bid = e.popup._source.feature.id;
+				// Loading additional properties using AJAX
+				$.ajax({
+					type : 'GET',
+					dataType : 'json',
+					data: {building_id:bid},
+					url:'ws/read_building.php',
+					success : function(data) {
+						var buildingDetailsHTML='';
+						buildingDetailsJSON=data.rows[0];
+						// Looping thru all attributes for this building
+						for (d in buildingDetailsJSON)
+						{
+							// Might need to adapt the presentation to each type of attribute
+							// This is a read-only presentation - could the markup be the same for edit (form)?
+							buildingDetailsHTML += "<li>"+d+": "+buildingDetailsJSON[d]+"</li>";
+						}
+						// Injecting extra properties
+						$('#selectedBuildingExtraProperties').html(buildingDetailsHTML);
+
+
+					}
+				});
+
+				moveToBuilding(bid,'pan');
+			});
 
 			drawnItems = new L.FeatureGroup();
 			map.addLayer(drawnItems);
@@ -263,6 +301,7 @@
 
 				$('#createBuildingModal').addClass('hide');
 			});
+
 			map.on('draw:deleted', function (e) {
 				var layers = e.layers;
 
@@ -399,17 +438,55 @@
 
 		refreshTagTally();
 
-		zoomToBuilding = function(buildingId){ 
+		moveToBuilding = function(buildingId,moveType){ 
 			// Assumption is that the building exists in the current vector layer
 			for (f in buildingVectorLayer._layers)
 			{
 				if (buildingVectorLayer._layers[f].feature.properties.id==buildingId)
 				{
-					buildingVectorLayer._layers[f].closePopup();
-					map.fitBounds(buildingVectorLayer._layers[f].getBounds());
+					//buildingVectorLayer._layers[f].closePopup();
+					if (moveType == 'pan')
+					{
+						map.panTo(buildingVectorLayer._layers[f].getBounds().getCenter(),{animate:true,duration:1,easeLinearity:0.1});
+					}
+					if (moveType == 'zoom')
+					{
+						map.fitBounds(buildingVectorLayer._layers[f].getBounds());
+					}
 					break;
 				}
 			}
+		}
+
+		editBuildingDetails = function(buildingID){
+			// Bringing in the edit form, with the appropriate pre-populated values
+			buildingDetailsJSON;
+
+			// Inject the form into the popup
+			var updateForm = '<form id="updateBuildingForm"> \
+				    	<fieldset> \
+							<input type="text" id="buildingName" class="input-small" name="name" placeholder="Building name" value="'+buildingDetailsJSON.name+'"><br>\
+							<input type="text" name="tags" placeholder="Add tags" class="tm-input"/> \
+						</fieldset> \
+						<button type="button" id="updateBuildingBtn" class="btn btn-mini">Save</button> \
+				    </form>';
+
+			$('#selectedBuildingExtraProperties').html(updateForm);
+
+			$(".tm-input").tagsManager({
+				prefilled: buildingDetailsJSON.tags.split(','),
+				typeahead: true,
+				typeaheadAjaxSource: 'ws/tag_list.php',
+				typeaheadAjaxPolling: true,
+				tagClass:'btn-primary btn-mini'
+			});
+
+		}
+
+		deleteBuilding = function(buildingID){
+			// Bringing in the delete button confirmation
+			// reconstitute the layersToDelete from the building ID
+			// then show the delete confirmation button
 		}
 
 	</script>
