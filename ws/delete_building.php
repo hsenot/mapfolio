@@ -28,6 +28,12 @@ try {
 	$recordSet = $pgconn->prepare($sql);
 	$recordSet->execute();
 
+	// Update the tag building table to reflect the fact that the building is no longer tagged
+	$sql = "DELETE FROM community.tag_building WHERE building_id in (".$p_building_ids.")";
+	//echo $sql;
+	$recordSet = $pgconn->prepare($sql);
+	$recordSet->execute();
+
 	exit('{"success":"true","building_ids":"'.$p_building_ids.'"}');
 }
 catch (Exception $e) {
