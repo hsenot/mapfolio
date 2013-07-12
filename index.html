@@ -98,23 +98,6 @@
 	<div class="row">
 		<div class="spanmap">
 			<div class="well" style="width: 592px;">
-				<!--
-				<div id="createBuildingModal" class="modal hide" data-backdrop="false">
-				    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
-					<div class="modal-body">
-				    <form id="createBuildingForm">
-				    	<fieldset>
-							<input type="text" id="buildingName" name="name" placeholder="Building name">
-							<br>
-							<input type="text" name="tags" placeholder="Tags" class="tm-input"/>
-							<br>
-							<input type="hidden" id="hiddenGeom" name="geom" value="">
-						</fieldset>
-						<button type="button" id="createBuildingBtn" class="btn">Create</button>
-				    </form>
-				  </div>
-				</div>
-				-->
 				<div id="deleteBuildingModal" class="modal hide" data-backdrop="false">
 				    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
 					<div class="modal-body">
@@ -136,9 +119,10 @@
 	<script src="leaflet.draw/leaflet.draw.js"></script>
 	<script>
 
-		var map, refreshBuildings, buildingVectorLayer, buildingDetailsJSON, totalRoofAreaDisplayed = 0, moveToBuilding, drawnItems, layerToCreate, layersToDelete, editBuildingDetails;
+		var map, refreshBuildings, buildingVectorLayer, buildingDetailsJSON, buildingPopupToOpen, totalRoofAreaDisplayed = 0, moveToBuilding, drawnItems, layerToCreate, layersToDelete, editBuildingDetails;
 		// Removed: 'black'
 		var css_colors = ['aqua', 'blue', 'fuchsia', 'gray', 'green', 'lime', 'maroon', 'navy', 'olive', 'orange', 'purple', 'red', 'silver', 'teal', 'white', 'yellow'];
+		var animateOptions = {animate:true,duration:1,easeLinearity:0.1};
 		function numberWithCommas(x) {
 		    return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
 		}
@@ -263,42 +247,22 @@
 
 				// Passing the layer to create as a global
 				layerToCreate = layer;
-
-				// Opening up a Bootstrap modal
-				$('#createBuildingModal').removeClass('hide');
-				$('#hiddenGeom').val(geomWKT);
-
-				map.addLayer(layerToCreate);
-
-			});
-
-			$('#createBuildingBtn').click(function(){
-				// To transmit:
-				var formData = $('#createBuildingForm').serialize();
+				map.addLayer(layer);
 
 				// Sending the building with its name and other elements to the create service
 				$.ajax({
 					type : 'POST',
 					dataType : 'json',
-					data: formData,
+					data: {geom:geomWKT},
 					url:'ws/insert_building.php',
 					success : function(data) {
-						// Reset form values for subsequent building creations
-						$('#createBuildingForm').each (function(){
-							this.reset();
-						});
-
-						// Display a small alert saying that the building has been successfully created
-						if (data.building_id)
-						{
-							//alert("Building created with ID:"+data.building_id);
-						}
 						// Move to the new building: this will trigger the layer redraw and we don't need to keep the temporary drawn structure on the map!
-						map.fitBounds(layerToCreate.getBounds());
+						map.fitBounds(layerToCreate.getBounds(), animateOptions);
 						map.removeLayer(layerToCreate);
 						layerToCreate = null;
 
-						refreshTagTally();
+						// Finding newly created layer based on building ID, and opening the corresponding popup
+						buildingPopupToOpen = data.building_id;
 					}
 				});
 
@@ -404,6 +368,21 @@
 
 						// Refresh the total roof area displayed
 						$('#total_roof_area').html(numberWithCommas(totalRoofAreaDisplayed)+" m<sup>2</sup>");
+
+						// Popup to open?
+						if (buildingPopupToOpen)
+						{
+							for (f in buildingVectorLayer._layers)
+							{
+								if (buildingVectorLayer._layers[f].feature.properties.id==buildingPopupToOpen)
+								{
+									var popupAnchorPoint = buildingVectorLayer._layers[f].getBounds().getCenter();
+									buildingVectorLayer._layers[f].openPopup(popupAnchorPoint);
+									buildingPopupToOpen=null;
+									break;
+								}
+							}
+						}
 					} 
 				});				
 			}
@@ -450,11 +429,11 @@
 					//buildingVectorLayer._layers[f].closePopup();
 					if (moveType == 'pan')
 					{
-						map.panTo(buildingVectorLayer._layers[f].getBounds().getCenter(),{animate:true,duration:1,easeLinearity:0.1});
+						map.panTo(buildingVectorLayer._layers[f].getBounds().getCenter(),animateOptions);
 					}
 					if (moveType == 'zoom')
 					{
-						map.fitBounds(buildingVectorLayer._layers[f].getBounds());
+						map.fitBounds(buildingVectorLayer._layers[f].getBounds(),animateOptions);
 					}
 					break;
 				}
@@ -462,9 +441,6 @@
 		}
 
 		editBuildingDetails = function(buildingID){
-			// Bringing in the edit form, with the appropriate pre-populated values
-			buildingDetailsJSON;
-
 			// Inject the form into the popup
 			var updateForm = '<form id="updateBuildingForm"> \
 				    	<fieldset> \
@@ -483,6 +459,30 @@
 				typeaheadAjaxPolling: true,
 				tagClass:'btn-primary btn-mini'
 			});
+
+			$('#updateBuildingBtn').click(function(){
+				// To transmit:
+				var formData = $('#updateBuildingForm').serialize();
+
+				// Sending the building with its name and other elements to the create service
+				$.ajax({
+					type : 'POST',
+					dataType : 'json',
+					data: formData,
+					url:'ws/update_building.php',
+					success : function(data) {
+						// Reset form values for subsequent building creations
+						$('#updateBuildingForm').each (function(){
+							this.reset();
+						});
+
+						refreshTagTally();
+					}
+				});
+
+				$('#createBuildingModal').addClass('hide');
+			});
+
 
 		}
 
