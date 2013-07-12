@@ -256,6 +256,8 @@
 						map.fitBounds(layerToCreate.getBounds());
 						map.removeLayer(layerToCreate);
 						layerToCreate = null;
+
+						refreshTagTally();
 					}
 				});
 
@@ -288,6 +290,8 @@
 						// Tidying up the client
 						map.removeLayer(layersToDelete);
 						layersToDelete = null;
+
+						refreshTagTally();
 					}
 				});
 
