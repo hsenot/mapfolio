@@ -48,6 +48,9 @@
 		    top: 110px;
 		    width: 360px;
 		}
+		.btn-mini {
+			font-size: 11px;
+		}
 
 		/* Leaflet */		
 		.leaflet-container .leaflet-control-attribution {
@@ -171,9 +174,9 @@
 			    	}
 			    	var htmlArray = [];
 			    	htmlArray.push("<div id='selectedBuildingExtraProperties'><img src='ajax-loader.gif'></div>");
-			    	htmlArray.push(	"<a class='btn btn-mini' href='#"+feature.properties.id+"' onClick='moveToBuilding("+feature.properties.id+",'zoom')'>Zoom</a>&nbsp;"+
-			    					"<a class='btn btn-mini' href='#"+feature.properties.id+"' onClick='editBuildingDetails("+feature.properties.id+")'>Edit</a>&nbsp;"+
-			    					"<a class='btn btn-mini' href='#"+feature.properties.id+"' onClick='deleteBuilding("+feature.properties.id+")'>Delete</a>");
+			    	htmlArray.push(	"<a class='btn btn-mini' href='#"+feature.properties.id+"' onClick='moveToBuilding("+feature.properties.id+",'zoom')'><i class='icon-zoom-in'></i> Zoom</a>&nbsp;"+
+			    					"<a class='btn btn-mini' href='#"+feature.properties.id+"' onClick='editBuildingDetails("+feature.properties.id+")'><i class='icon-pencil'></i> Edit</a>&nbsp;"+
+			    					"<a class='btn btn-mini' href='#"+feature.properties.id+"' onClick='deleteBuilding("+feature.properties.id+")'><i class='icon-trash'></i> Delete</a>");
 			        layer.bindPopup(htmlArray.join("<br>"),{keepInView:true,minWidth:250});
 			    }
 			}).addTo(map);
