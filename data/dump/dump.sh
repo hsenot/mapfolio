@@ -1,4 +1,3 @@
-rm /opt/opengeo/suite/webapps/solarsize/data/dump/community.zip
-pg_dump -p 54321 -n community solar > /opt/opengeo/suite/webapps/solarsize/data/dump/community.sql
-zip /opt/opengeo/suite/webapps/solarsize/data/dump/community.zip /opt/opengeo/suite/webapps/solarsize/data/dump/community.sql
-rm /opt/opengeo/suite/webapps/solarsize/data/dump/community.sql
+# Dumping the schema
+pg_dump -p 54321 --format plain --schema-only --no-owner --no-privileges --no-tablespaces --schema "community" "building" > 1-schema.sql
+
