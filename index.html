@@ -135,6 +135,7 @@
 		// Removed: 'black'
 		var css_colors = ['aqua', 'blue', 'fuchsia', 'gray', 'green', 'lime', 'maroon', 'navy', 'olive', 'orange', 'purple', 'red', 'silver', 'teal', 'white', 'yellow'];
 		var animateOptions = {animate:true,duration:1,easeLinearity:0.1};
+		var schemaName = 'community';
 		function numberWithCommas(x) {
 		    return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
 		}
@@ -230,7 +231,7 @@
 				$.ajax({
 					type : 'GET',
 					dataType : 'json',
-					data: {building_id:buildingId},
+					data: {building_id:buildingId,schema:schemaName},
 					url:'ws/read_building.php',
 					success : function(data) {
 						var buildingDetailsHTML='';
@@ -320,7 +321,7 @@
 				$.ajax({
 					type : 'POST',
 					dataType : 'json',
-					data: {geom:geomWKT},
+					data: {geom:geomWKT,schema:schemaName},
 					url:'ws/insert_building.php',
 					success : function(data) {
 						// Move to the new building: this will trigger the layer redraw and we don't need to keep the temporary drawn structure on the map!
@@ -345,7 +346,8 @@
 					type : 'GET',
 					dataType : 'json',
 					data: {
-						tag:currentClickedTag
+						tag:currentClickedTag,
+						schema:schemaName
 					},
 					url: 'ws/get_buildings.php?bbox=' + map.getBounds().toBBoxString(),
 					success : function(data) {
@@ -421,6 +423,7 @@
 			$.ajax({
 				type : 'GET',
 				dataType : 'json',
+				data: {schema:schemaName},
 				url:'ws/get_building_count.php',
 				success : function(data) {
 					var tagTally='';
@@ -438,6 +441,7 @@
 			$.ajax({
 				type : 'GET',
 				dataType : 'json',
+				data: {schema:schemaName},
 				url:'ws/get_tag_count.php',
 				success : function(data) {
 					var tagTally='';
@@ -476,7 +480,7 @@
 								$.ajax({
 									type : 'GET',
 									dataType : 'json',
-									data: {tag:currentClickedTag},
+									data: {tag:currentClickedTag, schema:schemaName},
 									url:'ws/get_tag_layer_bounding_box.php',
 									success: function(data){
 										var b = data.rows[0];
@@ -531,7 +535,7 @@
 			$(".tm-input").tagsManager({
 				prefilled: buildingDetailsJSON.tags.split(','),
 				typeahead: true,
-				typeaheadAjaxSource: 'ws/get_tag_list.php',
+				typeaheadAjaxSource: 'ws/get_tag_list.php?schema='+schemaName,
 				typeaheadAjaxPolling: true,
 				tagClass:'btn-primary btn-mini'
 			});
@@ -541,6 +545,7 @@
 			$('#updateBuildingBtn').click(function(){
 				// To transmit:
 				var formData = $('#updateBuildingForm').serialize();
+				formData += '&schema='+schemaName;
 
 				// Sending the building with its name and other elements to the create service
 				$.ajax({
@@ -590,7 +595,7 @@
 				$.ajax({
 					type : 'POST',
 					dataType : 'json',
-					data: {building_ids:buildingID},
+					data: {building_ids:buildingID,schema:schemaName},
 					url:'ws/delete_building.php',
 					success : function(data) {
 						for (f in buildingVectorLayer._layers)

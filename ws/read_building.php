@@ -1,30 +1,32 @@
 <?php
 /**
- * Process the created building
- *
+ * Reads information about a single building (within a schema)
  */
 
-# Includes
 require_once("inc/database.inc.php");
 require_once("inc/json.inc.php");
 
-# Retrieve URL arguments
-try {
-	$p_building_id = $_REQUEST['building_id'];
+# Schema should always be passed
+$schema='';
+if (isset($_REQUEST['schema']) and !empty($_REQUEST['schema']))
+{
+    $schema=$_REQUEST['schema'];
 }
-catch (Exception $e) {
-    trigger_error("Caught Exception: " . $e->getMessage(), E_USER_ERROR);
+else
+{
+    exit("Parameter 'schema' is required to use the web service.");
 }
 
-# Performs the query and returns XML or JSON
 try {
-	// Opening up DB connection
+	# Parameters
+	$p_building_id = $_REQUEST['building_id'];
+
+	# Opening up DB connection
 	$pgconn = pgConnection();
 
-	// Inserting the observation
-	// Status: 0 => imported, 1=> created by user, 2 => deleted
-	$sql = "SELECT id,name,round(ST_Area(ST_Transform(the_geom,3111))::numeric,0) as area_m2,(select array_to_string(array(select t.label from community.tag t, community.tag_building tb where tb.building_id=".$p_building_id." and tb.tag_id=t.id),',')) as tags FROM community.building WHERE id =".$p_building_id;
-	//echo $sql;
+	# Selecting the building attributes of interest
+	$sql = "SELECT id,name,round(ST_Area(ST_Transform(the_geom,3111))::numeric,0) as area_m2,(select array_to_string(array(select t.label from ".$schema.".tag t, ".$schema.".tag_building tb where tb.building_id=".$p_building_id." and tb.tag_id=t.id),',')) as tags FROM ".$schema.".building WHERE id =".$p_building_id;
+	#echo $sql;
 	$recordSet = $pgconn->prepare($sql);
 	$recordSet->execute();
 

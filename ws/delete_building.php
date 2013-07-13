@@ -1,36 +1,39 @@
 <?php
 /**
- * Process the created building
- *
+ * Deletes a building and its tag associations (within a schema)
  */
 
-# Includes
 require_once("inc/database.inc.php");
 require_once("inc/json.inc.php");
 
-# Retrieve URL arguments
-try {
-	$p_building_ids = $_REQUEST['building_ids'];
+# Schema should always be passed
+$schema='';
+if (isset($_REQUEST['schema']) and !empty($_REQUEST['schema']))
+{
+    $schema=$_REQUEST['schema'];
 }
-catch (Exception $e) {
-    trigger_error("Caught Exception: " . $e->getMessage(), E_USER_ERROR);
+else
+{
+    exit("Parameter 'schema' is required to use the web service.");
 }
 
-# Performs the query and returns XML or JSON
 try {
-	// Opening up DB connection
+	# Parameters
+	$p_building_ids = $_REQUEST['building_ids'];
+
+	# Opening up DB connection
 	$pgconn = pgConnection();
 
-	// Inserting the observation
-	// Status: 0 => imported, 1=> created by user, 2=> updated by user, 9 => deleted
-	$sql = "UPDATE community.building SET status=9 WHERE id in (".$p_building_ids.")";
-	//echo $sql;
+	# Deleting the building by setting its status to 9
+	# Status: 0 => imported, 1=> created by user, 2=> updated by user, 9 => deleted
+	$sql = "UPDATE ".$schema.".building SET status=9 WHERE id in (".$p_building_ids.")";
+	#echo $sql;
 	$recordSet = $pgconn->prepare($sql);
 	$recordSet->execute();
 
-	// Update the tag building table to reflect the fact that the building is no longer tagged
-	$sql = "DELETE FROM community.tag_building WHERE building_id in (".$p_building_ids.")";
-	//echo $sql;
+	# Update the tag building table to reflect the fact that the building is no longer tagged
+	$sql = "DELETE FROM ".$schema.".tag_building WHERE building_id in (".$p_building_ids.")";
+	#echo $sql;
 	$recordSet = $pgconn->prepare($sql);
 	$recordSet->execute();
 
