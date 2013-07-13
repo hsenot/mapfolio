@@ -26,7 +26,7 @@ try {
 
 	# Inserting the building
 	# Status: 0 => imported, 1=> created by user, 2=> updated by user, 9 => deleted
-	$sql = "INSERT INTO ".$schema.".building(source_id,status,the_geom) VALUES (0,1,ST_GeomFromText('".$p_geom."',4326));";
+	$sql = "INSERT INTO ".$schema.".building(pid,status,the_geom) VALUES (0,1,ST_GeomFromText('".$p_geom."',4326));";
 	#echo $sql;
 	$recordSet = $pgconn->prepare($sql);
 	$recordSet->execute();

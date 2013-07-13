@@ -31,7 +31,7 @@ try {
 
 	# Inserting the observation
 	# Status: 0 => imported, 1=> created by user, 2=> updated by user, 9 => deleted
-	$sql = "UPDATE ".$schema.".building SET (name,source_id,status) = ('".$p_name."',0,2) WHERE id=".$p_building_id;
+	$sql = "UPDATE ".$schema.".building SET (name,status) = ('".$p_name."',2) WHERE id=".$p_building_id;
 	#echo $sql;
 	$recordSet = $pgconn->prepare($sql);
 	$recordSet->execute();
