@@ -166,11 +166,15 @@
 			buildingVectorLayer = L.geoJson({features:[],type:"FeatureCollection"},{
 			    style: function (feature) {
 			    	var fcolor = 'yellow';
-
+			    	if (feature.properties.c != "0")
+			    	{
+			    		fcolor='green';
+			    	}
 			        return {
 			        	color: fcolor,
 			        	weight: 3,
-			        	opacity: 0.2
+			        	opacity: 0.5,
+			        	fillOpacity:0.1
 			    	};
 			    },
 			    onEachFeature: function (feature, layer) {

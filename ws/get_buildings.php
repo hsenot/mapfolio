@@ -41,7 +41,7 @@ try {
     $conn = pgConnection();
 
     # Build SQL SELECT statement and return the geometry as a GeoJSON element in EPSG: 4326
-    $sql = "SELECT b.id, st_asgeojson(st_transform(b.the_geom,4326),5) AS geojson".
+    $sql = "SELECT b.id, (select count(*) from ".$schema.".tag_building tb where tb.building_id=b.id) as c,st_asgeojson(st_transform(b.the_geom,4326),5) AS geojson".
         " FROM ".$schema.".building b".
         $sql_tag_part .
         " ST_Intersects(ST_Envelope(ST_Union(ST_SetSRID(ST_Point(".$ca[0].",".$ca[1]."),4326),ST_SetSRID(ST_Point(".$ca[2].",".$ca[3]."),4326))),b.the_geom)".
