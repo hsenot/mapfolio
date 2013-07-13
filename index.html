@@ -586,12 +586,21 @@
 
 						// Refreshing the details of the current building
 						loadBuildingDetails(buildingDetailsJSON.id);
+
 						// Refreshing tag tally
 						refreshTagTally();
-						// Displaying the read form
-						$('#buildingDivUpdate').hide();
-						$('#buildingDivDelete').hide();
-						$('#buildingDivRead').show();
+
+						// Close the popup
+						// By entering a range of tags repeatedly, we found that having the popup open after update was not really adding any value
+						for (f in buildingVectorLayer._layers)
+						{
+							if (buildingVectorLayer._layers[f].feature.properties.id==buildingDetailsJSON.id)
+							{
+								// Closing the popup
+								buildingVectorLayer._layers[f].closePopup();
+							}
+						}
+
 					}
 				});
 			});
