@@ -8,6 +8,7 @@
     <link href="bootstrap/tag-manager/bootstrap-tagmanager.css" rel="stylesheet">
 	<link rel="stylesheet" href="leaflet/leaflet.css" />
 	<link rel="stylesheet" href="leaflet.draw/leaflet.draw.css" />
+	<link rel="stylesheet" href="L.GeoSearch/src/css/l.geosearch.css" />
 	<!--[if lte IE 8]>
 		<link rel="stylesheet" href="leaflet.ie.css" />
 		<link rel="stylesheet" href="leaflet.draw/leaflet.draw.ie.css" />
@@ -130,9 +131,11 @@
 	<script src="leaflet/leaflet.js"></script>
 	<script src="leaflet-plugins/layer/tile/Bing.js"></script>
 	<script src="leaflet.draw/leaflet.draw.js"></script>
+	<script src="L.GeoSearch/src/js/l.control.geosearch.js"></script>
+	<script src="L.GeoSearch/src/js/l.geosearch.provider.google.js"></script>
 	<script>
 
-		var map, refreshBuildings, buildingVectorLayer, buildingDetailsJSON, buildingPopupToOpen, totalRoofAreaDisplayed = 0, moveToBuilding, drawnItems, layerToCreate, editBuildingDetails, loadBuildingDetails, currentClickedTag='';
+		var map, refreshBuildings, buildingVectorLayer, buildingDetailsJSON, buildingPopupToOpen, totalRoofAreaDisplayed = 0, moveToBuilding, drawnItems, layerToCreate, editBuildingDetails, loadBuildingDetails, currentClickedTag='', bing_cb;
 		// Removed: 'black'
 		var css_colors = ['aqua', 'blue', 'fuchsia', 'gray', 'green', 'lime', 'maroon', 'navy', 'olive', 'orange', 'purple', 'red', 'silver', 'teal', 'white', 'yellow'];
 		var animateOptions = {animate:true,duration:1,easeLinearity:0.1};
@@ -168,6 +171,14 @@
 			// Create the Bing layer and add it to the map
 			var binglayer = new L.BingLayer('AgxcV_eHKN9sD_UzjdBKiXru-b_mGfIKjD1SkgR0zJhhGQAAKqFvTs442gc1Eaay','Aerial')
 				.addTo(map);
+
+			new L.Control.GeoSearch({
+            	provider: new L.GeoSearch.Provider.Google({region:'au'})
+        	}).addTo(map);
+
+			bing_cb = function(data){
+				alert("Geocode returned!");
+			};
 
 			buildingVectorLayer = L.geoJson({features:[],type:"FeatureCollection"},{
 			    style: function (feature) {
