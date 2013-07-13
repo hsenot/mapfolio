@@ -25,7 +25,7 @@ try {
 	$pgconn = pgConnection();
 
 	# Selecting the building attributes of interest
-	$sql = "SELECT id,name,round(ST_Area(ST_Transform(the_geom,3111))::numeric,0) as area_m2,(select array_to_string(array(select t.label from ".$schema.".tag t, ".$schema.".tag_building tb where tb.building_id=".$p_building_id." and tb.tag_id=t.id),',')) as tags FROM ".$schema.".building WHERE id =".$p_building_id;
+	$sql = "SELECT b.id,b.name,(select count(*) from ".$schema.".tag_building tb where tb.building_id=b.id) as c,round(ST_Area(ST_Transform(b.the_geom,3111))::numeric,0) as area_m2,(select array_to_string(array(select t.label from ".$schema.".tag t, ".$schema.".tag_building tb where tb.building_id=".$p_building_id." and tb.tag_id=t.id),',')) as tags FROM ".$schema.".building b WHERE b.id =".$p_building_id;
 	#echo $sql;
 	$recordSet = $pgconn->prepare($sql);
 	$recordSet->execute();

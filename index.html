@@ -140,6 +140,11 @@
 		    return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
 		}
 
+		function toTitleCase(str)
+		{
+			return str.replace(/\w\S*/g, function(txt){return txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase();});
+		}
+
         // Window resize function
         var rsz = function(){
             var h = $(window).height();
@@ -243,17 +248,35 @@
 						// Looping thru all attributes for this building
 						for (var d in buildingDetailsJSON)
 						{
-							// Might need to adapt the presentation to each type of attribute
+							// Adapt the presentation to each attribute
 							switch (d)
 							{
 								case "id":
 									break;
+								case "c":
+									break;
+								case "area_m2":
+									buildingDetailsHTML += "<ul>Area: "+numberWithCommas(buildingDetailsJSON[d])+" m<sup>2</sup></ul>";
+									break;
 								default:
-									buildingDetailsHTML += "<ul>"+d+": "+buildingDetailsJSON[d]+"</ul>";
+									buildingDetailsHTML += "<ul>"+toTitleCase(d)+": "+buildingDetailsJSON[d]+"</ul>";
 							}
 						}
 						// Injecting extra properties
 						$('#selectedBuildingExtraProperties').html(buildingDetailsHTML);
+
+						// Potentially resetting style to take into account new information
+						for (f in buildingVectorLayer._layers)
+						{
+							if (buildingVectorLayer._layers[f].feature.properties.id==buildingId)
+							{
+								// Transferring all up-to-date values from the retrieved JSON to the properties of the layer
+								// Note: we could limit ourselves to transfer only the properties that are effectively used in the style i.e. 'c'
+								buildingVectorLayer._layers[f].feature.properties.c = buildingDetailsJSON["c"];
+								buildingVectorLayer.resetStyle(buildingVectorLayer._layers[f]);
+								break;
+							}
+						}						
 					}
 				});				
 			};
