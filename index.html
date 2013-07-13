@@ -32,6 +32,9 @@
 		hr {
 			margin: 5px 0;
 		}
+		p {
+		    margin: 0 0 2px;
+		}
 
 		/* Bootstrap */
 		.well {
@@ -39,15 +42,16 @@
 			padding: 8px;
 			margin-bottom: 8px;
 		}
-		.spanmap {
- 		   width: 610px;
-		}
 		.row {
 		    margin-left: 0px;
 		}
 		[class*="span"] {
 			margin-right: 10px;
 			margin-left: 0;
+		}
+		/* Needed because span2 + span6 does not align with the span8 of the map div */
+		.span6 {
+			width: 470px;
 		}
 		.modal{
 		    left: 254px;
@@ -83,25 +87,38 @@
 </head>
 <body>
 
-	<div class="row">
-		<div class="spanmap">
-			<div class="row">
-				<div class="well inlineblock" style="width:140px;">
-					<p style="display:inline-block;font-size:12px;line-height:15px;text-align:center;">Total number of buildings</p> <p id="total_building_number" style="font-size:32px;text-align:center"><img src='ajax-loader.gif'></p>
+	<div class="container">
+		<div class="row">
+			<div class="span2">
+				<div class="well inlineblock">
+					<p style="display:inline-block;font-size:11px;line-height:15px;text-align:center;">Total number of buildings</p> <p id="total_building_number" style="font-size:28px;text-align:center"><img src='ajax-loader.gif' style="height:16px;width:16px;align:center;"></p>
 				</div>
+			</div>
 
-				<div id="tagTally" class="well inlineblock" style="margin-left:4px;width:425px;vertical-align:top;text-align:center;">
+			<div class="span6">
+				<div id="tagTally" class="well inlineblock" style="margin-left:4px;vertical-align:top;text-align:center;">
 					<img src='ajax-loader.gif'>
 				</div>
+			</div>
 
+			<div class="span4">
+				<div class="well">
+					More stuff here
+				</div>
 			</div>
 		</div>
-	</div>
 
-	<div class="row">
-		<div class="spanmap">
-			<div class="well" style="width: 592px;">
-				<div id="map" style="width: 592px; height: 592px; border: 1px;"></div>
+		<div class="row">
+			<div class="span8">
+				<div class="well" style="margin-bottom:0px;">
+					<div id="map" style="height:50px;"></div>
+				</div>
+			</div>
+
+			<div class="span4">
+				<div class="well">
+					Building list
+				</div>
 			</div>
 		</div>
 	</div>
@@ -121,6 +138,20 @@
 		function numberWithCommas(x) {
 		    return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
 		}
+
+        // Window resize function
+        var rsz = function(){
+            var h = $(window).height();
+            var w = $(window).width();
+            // Using all the height available, up to 500px
+            var hmax = Math.min(h-135,600);
+            // Setting height to window height minus the header and footer sizes
+            $("#map").css('height',hmax);
+        };
+
+        // Initial width/height values are required for display of vector layer
+        rsz();
+        $(window).resize(rsz);
 
 		function initmap() {
 			// Set up the map
@@ -413,7 +444,7 @@
 					// Tidying up the client
 					for (i=0;i<data.rows.length;i++)
 					{
-						tagTally += "<button class='btn btn-mini btn-primary tag-button' type='button'>" + data.rows[i].label + "</button> &times; " + data.rows[i].c + "&nbsp;&nbsp;&nbsp;";
+						tagTally += "<p style='display:inline-block;'><button class='btn btn-mini btn-primary tag-button' type='button'>" + data.rows[i].label + "</button> &times; " + data.rows[i].c + "</p>&nbsp;&nbsp;&nbsp;";
 					}
 					// Injecting
 					$('#tagTally').html(tagTally);
