@@ -87,11 +87,11 @@
 		<div class="spanmap">
 			<div class="row">
 				<div class="well inlineblock" style="width:140px;">
-					<p style="display:inline-block;font-size:12px;line-height:15px;text-align:center;">Total building area identified within the map:</p> <p id="total_roof_area" style="font-size:15px;text-align:center">calculating ...</p>
+					<p style="display:inline-block;font-size:12px;line-height:15px;text-align:center;">Total number of buildings</p> <p id="total_building_number" style="font-size:32px;text-align:center"><img src='ajax-loader.gif'></p>
 				</div>
 
-				<div id="tagTally" class="well inlineblock" style="margin-left:4px;width:425px;vertical-align:top;">
-					Loading tags ...
+				<div id="tagTally" class="well inlineblock" style="margin-left:4px;width:425px;vertical-align:top;text-align:center;">
+					<img src='ajax-loader.gif'>
 				</div>
 
 			</div>
@@ -114,7 +114,7 @@
 	<script src="leaflet.draw/leaflet.draw.js"></script>
 	<script>
 
-		var map, refreshBuildings, buildingVectorLayer, buildingDetailsJSON, buildingPopupToOpen, totalRoofAreaDisplayed = 0, moveToBuilding, drawnItems, layerToCreate, editBuildingDetails, loadBuildingDetails;
+		var map, refreshBuildings, buildingVectorLayer, buildingDetailsJSON, buildingPopupToOpen, totalRoofAreaDisplayed = 0, moveToBuilding, drawnItems, layerToCreate, editBuildingDetails, loadBuildingDetails, currentClickedTag='';
 		// Removed: 'black'
 		var css_colors = ['aqua', 'blue', 'fuchsia', 'gray', 'green', 'lime', 'maroon', 'navy', 'olive', 'orange', 'purple', 'red', 'silver', 'teal', 'white', 'yellow'];
 		var animateOptions = {animate:true,duration:1,easeLinearity:0.1};
@@ -149,7 +149,7 @@
 			    		feature_name = "Unknown";
 			    	}
 			    	var htmlArray = [];
-			    	var allDiv, divRead, divReadContent, divReadFooter, divUpdate='', divUpdateContent, divUpdateFooter, divDelete='';
+			    	var allDiv, divRead, divReadContent, divReadFooter, divUpdate='', divUpdateContent, divUpdateFooter, divDelete='', divDeleteContent, divDeleteFooter;
 
 			    	divReadContent = "<div id='selectedBuildingExtraProperties'><img src='ajax-loader.gif'></div>";
 			    	divReadFooter = 
@@ -299,6 +299,9 @@
 
 						// Finding newly created layer based on building ID, and opening the corresponding popup
 						buildingPopupToOpen = data.building_id;
+
+						// Refresh buiding number
+						refreshBuildingNumber();
 					}
 				});
 
@@ -306,23 +309,14 @@
 			});
 
 			refreshBuildings = function(){
-				// Loading indicator
-				$('#total_roof_area').html("calculating ...");
 				// fetching the new features based on the new 
 				$.ajax({
 					type : 'GET',
 					dataType : 'json',
 					data: {
-						geotable:'community.building',
-						geomfield:'the_geom',
-						// Status: 0 => imported, 1=> created by user, 2 => deleted
-						parameters:'status <> 9',
-						fields:'id,name,round(ST_Area(ST_Transform(the_geom,3111))::numeric,0) as area_m2',
-						limit: 100,
-						orderby:'ST_Distance(the_geom,ST_SetSRID(ST_Point('+map.getCenter().lng+','+map.getCenter().lat+'),4326))',
-						sort:'ASC'
+						tag:currentClickedTag
 					},
-					url: 'ws/postgis_geojson.php?bbox=' + map.getBounds().toBBoxString(),
+					url: 'ws/get_buildings.php?bbox=' + map.getBounds().toBBoxString(),
 					success : function(data) {
 						// object made of id
 						var new_ids = {};
@@ -367,9 +361,6 @@
 						// Adding the new features
 						buildingVectorLayer.addData(data_trimmed);
 
-						// Refresh the total roof area displayed
-						$('#total_roof_area').html(numberWithCommas(totalRoofAreaDisplayed)+" m<sup>2</sup>");
-
 						// Popup to open?
 						if (buildingPopupToOpen)
 						{
@@ -394,22 +385,88 @@
 		map.on('moveend',refreshBuildings)
 		refreshBuildings();
 
+		refreshBuildingNumber = function(){
+			// Refreshing the tally of tags
+			$.ajax({
+				type : 'GET',
+				dataType : 'json',
+				url:'ws/get_building_count.php',
+				success : function(data) {
+					var tagTally='';
+					// Tidying up the client
+					$('#total_building_number').html(numberWithCommas(data.rows[0].c));
+				}
+			});
+
+		};
+		refreshBuildingNumber();
+
 		// List the tags and their respective weight
 		refreshTagTally = function(){
 			// Refreshing the tally of tags
 			$.ajax({
 				type : 'GET',
 				dataType : 'json',
-				url:'ws/tag_count.php',
+				url:'ws/get_tag_count.php',
 				success : function(data) {
 					var tagTally='';
 					// Tidying up the client
 					for (i=0;i<data.rows.length;i++)
 					{
-						tagTally += "<button class='btn btn-mini btn-primary' type='button'>" + data.rows[i].label + "</button> X " + data.rows[i].c + "&nbsp;&nbsp;&nbsp;";
+						tagTally += "<button class='btn btn-mini btn-primary tag-button' type='button'>" + data.rows[i].label + "</button> &times; " + data.rows[i].c + "&nbsp;&nbsp;&nbsp;";
 					}
 					// Injecting
 					$('#tagTally').html(tagTally);
+
+					// Adding action button
+					$('.tag-button').each(function(){
+						$(this).click(function(){
+							if (currentClickedTag == $(this).html())
+							{
+								// Clicked button style management
+								$(this).removeClass('btn-warning').addClass('btn-primary');
+
+								// Removing current clicked tag
+								currentClickedTag=null;
+
+								// Refreshing the view with all buildings (no tags)
+								refreshBuildings();
+							}
+							else
+							{
+								// Clicked button style management
+								$('.tag-button').removeClass('btn-warning').addClass('btn-primary');
+								$(this).removeClass('btn-primary').addClass('btn-warning');
+
+								// New button clicked: we take note in the global variable currentClickedTag
+								currentClickedTag = $(this).html();
+
+								// Get the bounding box for the entire layer
+								$.ajax({
+									type : 'GET',
+									dataType : 'json',
+									data: {tag:currentClickedTag},
+									url:'ws/get_tag_layer_bounding_box.php',
+									success: function(data){
+										var b = data.rows[0];
+										var bbox = new L.LatLngBounds([b.ymin,b.xmin],[b.ymax,b.xmax]);
+										
+										if (map.getBounds().contains(bbox))
+										{
+											// We don't move but we refresh the buildings
+											refreshBuildings();
+										}
+										else
+										{
+											// We move, which in turn will refresh the buildings
+											map.fitBounds(bbox, animateOptions);
+										}
+									}
+								});								
+							}
+
+						})
+					});
 				}
 			});
 		};
@@ -443,7 +500,7 @@
 			$(".tm-input").tagsManager({
 				prefilled: buildingDetailsJSON.tags.split(','),
 				typeahead: true,
-				typeaheadAjaxSource: 'ws/tag_list.php',
+				typeaheadAjaxSource: 'ws/get_tag_list.php',
 				typeaheadAjaxPolling: true,
 				tagClass:'btn-primary btn-mini'
 			});
@@ -516,6 +573,9 @@
 								map.removeLayer(buildingVectorLayer._layers[f]);
 							}
 						}
+
+						// Refresh building number
+						refreshBuildingNumber();
 
 						// Refreshing tag tally
 						refreshTagTally();

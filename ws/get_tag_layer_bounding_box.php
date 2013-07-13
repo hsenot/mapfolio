@@ -28,44 +28,6 @@ function escapeJsonString($value) { # list from www.json.org: (\b backspace, \f 
 function my_pg_escape_string($t) {
     return $t;
 }
- 
-# Retrive URL variables
-if (empty($_GET['geotable'])) {
-    echo "missing required parameter: <i>geotable</i>";
-    exit;
-} else
-    $geotable = $_GET['geotable'];
-
-if (empty($_GET['geomfield'])) {
-    echo "missing required parameter: <i>geomfield</i>";
-    exit;
-} else
-    $geomfield = $_GET['geomfield'];
-
-if (empty($_GET['srid'])) {
-    $srid = '4326';
-} else
-    $srid = $_GET['srid'];
-
-if (empty($_GET['fields'])) {
-    $fields = '*';
-} else
-    $fields = $_GET['fields'];
-
-$parameters = $_GET['parameters'];
-
-$bbox = $_GET['bbox'];
-
-$orderby    = $_GET['orderby'];
-
-if (empty($_GET['sort'])) {
-    $sort = 'ASC';
-} else
-    $sort = $_GET['sort'];
-	
-$limit      = $_GET['limit'];
-
-$offset     = $_GET['offset'];
 
 # Connect to PostgreSQL database
 $conn = pgConnection();
@@ -74,30 +36,19 @@ if (!$conn) {
     exit;
 }
 
-# Build SQL SELECT statement and return the geometry as a GeoJSON element in EPSG: 4326
-$sql = "SELECT " . my_pg_escape_string($fields) . ", st_asgeojson(st_transform(" . my_pg_escape_string($geomfield) . ",$srid),5) AS geojson FROM " . my_pg_escape_string($geotable);
-if (strlen(trim($bbox)) > 0) {
-    $bbox=trim($bbox);
-    $ca = split(",",$bbox);
-    $sql_bbox = "ST_Intersects(ST_Envelope(ST_Union(ST_SetSRID(ST_Point(".$ca[0].",".$ca[1]."),4326),ST_SetSRID(ST_Point(".$ca[2].",".$ca[3]."),4326)))," . my_pg_escape_string($geomfield) .")";
-}
-if (strlen(trim($parameters)) > 0) {
-    if ($sql_bbox)
-    $sql .= " WHERE " . my_pg_escape_string($parameters) ." AND ".$sql_bbox;
+# Existence of tag means that we search by tag
+if (isset($_GET['tag']) and !empty($_GET['tag']))
+{
+    $tag_label = $_GET['tag'];
+    $sql_tag_part = " ,community.tag_building tb, community.tag t WHERE b.id=tb.building_id AND tb.tag_id=t.id AND t.label='".$tag_label."' AND";
 }
 else
 {
-    $sql .= " WHERE ".$sql_bbox;
+    $sql_tag_part = " WHERE";
 }
-if (strlen(trim($orderby)) > 0) {
-    $sql .= " ORDER BY " . my_pg_escape_string($orderby) . " " . $sort;
-}
-if (strlen(trim($limit)) > 0) {
-    $sql .= " LIMIT " . my_pg_escape_string($limit);
-}
-if (strlen(trim($offset)) > 0) {
-    $sql .= " OFFSET " . my_pg_escape_string($offset);
-}
+
+# Build SQL SELECT statement and return the geometry as a GeoJSON element in EPSG: 4326
+$sql = "select st_xmin(b) as xmin,st_ymin(b) as ymin,st_xmax(b) as xmax,st_ymax(b) as ymax from (SELECT ST_Extent(b.the_geom) as b FROM community.building b,community.tag_building tb, community.tag t WHERE b.id=tb.building_id AND tb.tag_id=t.id AND t.label='".$tag_label."') t";
 
 if (isset($_REQUEST['debug']))
 {
@@ -114,6 +65,6 @@ if (!$recordSet) {
 }
 
 # Build GeoJSON
-echo rs2geojson($recordSet);
+echo rs2json($recordSet,"rows");
 
 ?>
