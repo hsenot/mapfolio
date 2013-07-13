@@ -26,7 +26,6 @@ SET default_with_oids = false;
 CREATE TABLE building (
     id integer NOT NULL,
     name text,
-    pid integer,
     the_geom public.geometry(Geometry,4326),
     status smallint DEFAULT 0
 );

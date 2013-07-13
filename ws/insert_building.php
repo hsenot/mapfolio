@@ -24,15 +24,8 @@ try {
 	# Opening up DB connection
 	$pgconn = pgConnection();
 
-	# Inserting the building
-	# Status: 0 => imported, 1=> created by user, 2=> updated by user, 9 => deleted
-	$sql = "INSERT INTO ".$schema.".building(pid,status,the_geom) VALUES (0,1,ST_GeomFromText('".$p_geom."',4326));";
-	#echo $sql;
-	$recordSet = $pgconn->prepare($sql);
-	$recordSet->execute();
-
     # Getting the building number (somehow curr_val does not always work)
-	$sql = "SELECT currval('".$schema.".building_id_seq') as c";
+	$sql = "SELECT nextval('".$schema.".building_id_seq') as c";
 	#echo $sql;
 	$recordSet = $pgconn->prepare($sql);
 	$recordSet->execute();
@@ -42,7 +35,16 @@ try {
 		# Have to name the column instead of using index 0 to indicate 1st column
 		$building_id = $row['c'];
 	}
-	exit('{"success":"true","building_id":"'.$building_id.'"}');
+
+	# Inserting the building
+	# Status: 0 => imported, 1=> created by user, 2=> updated by user, 9 => deleted
+	$sql = "INSERT INTO ".$schema.".building(id,status,the_geom) VALUES (-".$building_id.",1,ST_GeomFromText('".$p_geom."',4326));";
+	#echo $sql;
+	$recordSet = $pgconn->prepare($sql);
+	$recordSet->execute();
+
+
+	exit('{"success":"true","building_id":"-'.$building_id.'"}');
 }
 catch (Exception $e) {
 	trigger_error("Caught Exception: " . $e->getMessage(), E_USER_ERROR);
