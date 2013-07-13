@@ -237,7 +237,7 @@
 						var buildingDetailsHTML='';
 						buildingDetailsJSON=data.rows[0];
 						// Looping thru all attributes for this building
-						for (d in buildingDetailsJSON)
+						for (var d in buildingDetailsJSON)
 						{
 							// Might need to adapt the presentation to each type of attribute
 							switch (d)
@@ -371,8 +371,6 @@
 								}
 								else
 								{
-									// Updating roof area by substracting the areas of features we remove
-									totalRoofAreaDisplayed = totalRoofAreaDisplayed - parseInt(current_feature.feature.properties.area_m2);
 									// Deleting only this feature - clearLayers would remove all features
 									buildingVectorLayer.removeLayer(buildingVectorLayer._layers[f]);
 								}
