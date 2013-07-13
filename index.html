@@ -393,11 +393,6 @@
 		initmap();
 		map.on('moveend',refreshBuildings)
 		refreshBuildings();
-		$(".tm-input").tagsManager({
-			typeahead: true,
-			typeaheadAjaxSource: 'ws/tag_list.php',
-			typeaheadAjaxPolling: true
-		});
 
 		// List the tags and their respective weight
 		refreshTagTally = function(){
