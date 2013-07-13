@@ -25,6 +25,13 @@
 		    height: 12px;
 		    margin-bottom: 2px;
 		}
+		ul {
+			margin:1px;
+			font-size:11px;
+		}
+		hr {
+			margin: 5px 0;
+		}
 
 		/* Bootstrap */
 		.well {
@@ -56,22 +63,18 @@
 		.leaflet-container .leaflet-control-attribution {
 			font-size: 8px;
 		}
-
 		.tm-input {
-			width:50px;
+			width:80px;
 		}
-
 		.tm-tag {
 			color: #FFFFFF;
 			text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.25);
-			font-size: 10px;
 		}
 
 		/* Misc */
 		.centered {
 			text-align: center;
 		}
-
 		.inlineblock {
 			display: inline-block;
 		}
@@ -98,14 +101,6 @@
 	<div class="row">
 		<div class="spanmap">
 			<div class="well" style="width: 592px;">
-				<div id="deleteBuildingModal" class="modal hide" data-backdrop="false">
-				    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
-					<div class="modal-body">
-					Are you sure you want to delete this building?
-					<button type="button" id="deleteBuildingBtn" class="btn">Yes</button>
-				  </div>
-				</div>
-
 				<div id="map" style="width: 592px; height: 592px; border: 1px;"></div>
 			</div>
 		</div>
@@ -119,7 +114,7 @@
 	<script src="leaflet.draw/leaflet.draw.js"></script>
 	<script>
 
-		var map, refreshBuildings, buildingVectorLayer, buildingDetailsJSON, buildingPopupToOpen, totalRoofAreaDisplayed = 0, moveToBuilding, drawnItems, layerToCreate, layersToDelete, editBuildingDetails, loadBuildingDetails;
+		var map, refreshBuildings, buildingVectorLayer, buildingDetailsJSON, buildingPopupToOpen, totalRoofAreaDisplayed = 0, moveToBuilding, drawnItems, layerToCreate, editBuildingDetails, loadBuildingDetails;
 		// Removed: 'black'
 		var css_colors = ['aqua', 'blue', 'fuchsia', 'gray', 'green', 'lime', 'maroon', 'navy', 'olive', 'orange', 'purple', 'red', 'silver', 'teal', 'white', 'yellow'];
 		var animateOptions = {animate:true,duration:1,easeLinearity:0.1};
@@ -159,16 +154,16 @@
 			    	divReadContent = "<div id='selectedBuildingExtraProperties'><img src='ajax-loader.gif'></div>";
 			    	divReadFooter = 
 			    	"<div style='text-align:center;'>"+
-			    		"<a class='btn btn-mini' href='#"+feature.properties.id+"' onClick='moveToBuilding("+feature.properties.id+",\"zoom\")'><i class='icon-zoom-in'></i> Zoom</a>&nbsp;"+
+			    		"<a class='btn btn-mini' href='#"+feature.properties.id+"' onClick='moveToBuilding("+feature.properties.id+",\"zoom\")'><i class='icon-zoom-in'></i> Zoom to</a>&nbsp;"+
 			    		"<a class='btn btn-mini' href='#"+feature.properties.id+"' onClick='editBuildingDetails("+feature.properties.id+")'><i class='icon-pencil'></i> Edit</a>&nbsp;"+
 			    		"<a class='btn btn-mini' href='#"+feature.properties.id+"' onClick='deleteBuilding("+feature.properties.id+")'><i class='icon-trash'></i> Delete</a>"+
 			    	"</div>";
-			    	divRead = "<div id='buildingDivRead'>" + divReadContent + divReadFooter + "</div>";
+			    	divRead = "<div id='buildingDivRead'>" + divReadContent + "<hr>" + divReadFooter + "</div>";
 
 			    	divUpdateContent = 
 			    	"<form id='updateBuildingForm'>"+
 				    	"<fieldset>"+
-							"<input type='text' id='building_name' class='input-small' name='building_name' placeholder='Building name' value=''><br>"+
+							"<input type='text' id='building_name' class='input-medium' name='building_name' placeholder='Building name' value=''><br>"+
 							"<input type='text' name='tags' placeholder='Add tags' class='tm-input'/>"+
 							"<input type='hidden' name='building_id' />"+
 						"</fieldset>"+
@@ -176,10 +171,22 @@
 				    divUpdateFooter = 
    			    	"<div style='text-align:center;'>"+
 						"<button type='button' id='updateCancelBuildingBtn' class='btn btn-mini btn-link'>Cancel</button>"+
-						"<button type='button' id='updateBuildingBtn' class='btn btn-mini'>Save</button>"+
+						"<button type='button' id='updateBuildingBtn' class='btn btn-mini'><i class='icon-check'></i> Save</button>"+
 					"</div>";
 
-					divUpdate = "<div id='buildingDivUpdate' class='hide'>" + divUpdateContent + divUpdateFooter + "</div>";
+					divUpdate = "<div id='buildingDivUpdate' class='hide'>" + divUpdateContent + "<hr>" + divUpdateFooter + "</div>";
+
+					divDeleteContent = 
+					"Are you sure you want to delete this building?<br>"+
+					"Note: this action can not be undone.";
+
+					divDeleteFooter = 
+					"<div>"+
+						"<button type='button' id='deleteBuildingBtn' style='float:left;' class='btn btn-mini btn-danger'>Yes, delete</button>"+
+						"<button type='button' id='deleteCancelBuildingBtn' style='float:right' class='btn btn-mini btn-link'>No, don't delete</button>"+
+					"</div>";
+
+					divDelete = "<div id='buildingDivDelete' class='hide'>" + divDeleteContent + "<hr>" + divDeleteFooter + "<br></div>";
 
 			    	allDiv = divRead + divUpdate + divDelete;
 
@@ -201,8 +208,13 @@
 						for (d in buildingDetailsJSON)
 						{
 							// Might need to adapt the presentation to each type of attribute
-							// This is a read-only presentation - could the markup be the same for edit (form)?
-							buildingDetailsHTML += "<ul>"+d+": "+buildingDetailsJSON[d]+"</ul>";
+							switch (d)
+							{
+								case "id":
+									break;
+								default:
+									buildingDetailsHTML += "<ul>"+d+": "+buildingDetailsJSON[d]+"</ul>";
+							}
 						}
 						// Injecting extra properties
 						$('#selectedBuildingExtraProperties').html(buildingDetailsHTML);
@@ -243,7 +255,8 @@
 				},
 				edit: {
 					featureGroup: buildingVectorLayer,
-					edit: false
+					edit: false,
+					remove: false
 				}
 			});
 
@@ -290,41 +303,6 @@
 				});
 
 				$('#createBuildingModal').addClass('hide');
-			});
-
-			map.on('draw:deleted', function (e) {
-				var layers = e.layers;
-
-				// Passing the layer to create as a global
-				layersToDelete = layers;
-
-				// Opening up a Bootstrap modal
-				$('#deleteBuildingModal').removeClass('hide');
-
-			});	
-
-			$('#deleteBuildingBtn').click(function(){
-				var buildingIdList='';
-				layersToDelete.eachLayer(function(l){
-					buildingIdList += l.feature.id+",";
-				});
-				buildingIdList = buildingIdList.substring(0,buildingIdList.length-1);
-				// Sending the building with its name and other elements to the create service
-				$.ajax({
-					type : 'POST',
-					dataType : 'json',
-					data: {'building_ids': buildingIdList},
-					url:'ws/delete_building.php',
-					success : function(data) {
-						// Tidying up the client
-						map.removeLayer(layersToDelete);
-						layersToDelete = null;
-
-						refreshTagTally();
-					}
-				});
-
-				$('#deleteBuildingModal').addClass('hide');
 			});
 
 			refreshBuildings = function(){
@@ -467,7 +445,6 @@
 			// Populating the form fields with the appropiate values from the JSON
 			$('input[name=building_name]').val(buildingDetailsJSON.name);
 			$('input[name=building_id]').val(buildingDetailsJSON.id);
-
 			$(".tm-input").tagsManager({
 				prefilled: buildingDetailsJSON.tags.split(','),
 				typeahead: true,
@@ -476,6 +453,7 @@
 				tagClass:'btn-primary btn-mini'
 			});
 
+			// Button actions
 			$('#updateBuildingBtn').unbind('click');
 			$('#updateBuildingBtn').click(function(){
 				// To transmit:
@@ -499,11 +477,11 @@
 						refreshTagTally();
 						// Displaying the read form
 						$('#buildingDivUpdate').hide();
+						$('#buildingDivDelete').hide();
 						$('#buildingDivRead').show();
 					}
 				});
 			});
-
 			$('#updateCancelBuildingBtn').unbind('click');
 			$('#updateCancelBuildingBtn').click(function(){
 				$('#updateBuildingForm').each (function(){
@@ -511,17 +489,55 @@
 				});
 
 				$('#buildingDivUpdate').hide();
+				$('#buildingDivDelete').hide();
 				$('#buildingDivRead').show();					
 			});
 
+			// Displaying the right div
 			$('#buildingDivRead').hide();
+			$('#buildingDivDelete').hide();
 			$('#buildingDivUpdate').show();
 		}
 
 		deleteBuilding = function(buildingID){
-			// Bringing in the delete button confirmation
-			// reconstitute the layersToDelete from the building ID
-			// then show the delete confirmation button
+			// Button actions
+			$('#deleteBuildingBtn').unbind('click');
+			$('#deleteBuildingBtn').click(function(){
+				// Sending the building with its name and other elements to the create service
+				$.ajax({
+					type : 'POST',
+					dataType : 'json',
+					data: {building_ids:buildingID},
+					url:'ws/delete_building.php',
+					success : function(data) {
+						for (f in buildingVectorLayer._layers)
+						{
+							if (buildingVectorLayer._layers[f].feature.properties.id==buildingID)
+							{
+								// Closing / unbinding the popup
+								buildingVectorLayer._layers[f].closePopup();
+								buildingVectorLayer._layers[f].unbindPopup();
+								// Tidying up the client
+								map.removeLayer(buildingVectorLayer._layers[f]);
+							}
+						}
+
+						// Refreshing tag tally
+						refreshTagTally();
+					}
+				});
+			});
+			$('#deleteCancelBuildingBtn').unbind('click');
+			$('#deleteCancelBuildingBtn').click(function(){
+				$('#buildingDivUpdate').hide();
+				$('#buildingDivDelete').hide();
+				$('#buildingDivRead').show();
+			});
+
+			// Displaying the right div
+			$('#buildingDivRead').hide();
+			$('#buildingDivUpdate').hide();
+			$('#buildingDivDelete').show();
 		}
 
 	</script>
