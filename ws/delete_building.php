@@ -22,8 +22,8 @@ try {
 	$pgconn = pgConnection();
 
 	// Inserting the observation
-	// Status: 0 => imported, 1=> created by user, 2 => deleted
-	$sql = "UPDATE community.building SET status=2 WHERE id in (".$p_building_ids.")";
+	// Status: 0 => imported, 1=> created by user, 2=> updated by user, 9 => deleted
+	$sql = "UPDATE community.building SET status=9 WHERE id in (".$p_building_ids.")";
 	//echo $sql;
 	$recordSet = $pgconn->prepare($sql);
 	$recordSet->execute();

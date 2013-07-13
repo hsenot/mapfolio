@@ -15,12 +15,6 @@ function sanitizeTextParameter ($p) {
 
 # Retrieve URL arguments
 try {
-	$p_name = isset($_REQUEST['name']) ? $_REQUEST['name'] : '';
-	$p_name = sanitizeTextParameter($p_name);
-	$p_tags = isset($_REQUEST['hidden-tags']) ? $_REQUEST['hidden-tags'] : '';
-	$p_tags_arr=explode(",",$p_tags);
-	# Merging back the array and adding the quotes
-	$p_tags_list="'".implode("','",$p_tags_arr)."'";
 	$p_geom = isset($_REQUEST['geom']) ? $_REQUEST['geom'] : '';
 }
 catch (Exception $e) {
@@ -34,7 +28,7 @@ try {
 
 	// Inserting the observation
 	// Status: 0 => imported, 1=> created by user, 2 => deleted
-	$sql = "INSERT INTO community.building(name,source_id,status,the_geom) VALUES ('".$p_name."',0,1,ST_GeomFromText('".$p_geom."',4326));";
+	$sql = "INSERT INTO community.building(source_id,status,the_geom) VALUES (0,1,ST_GeomFromText('".$p_geom."',4326));";
 	//echo $sql;
 	$recordSet = $pgconn->prepare($sql);
 	$recordSet->execute();
@@ -50,14 +44,6 @@ try {
 		// Have to name the column instead of using index 0 to indicate 1st column
 		$building_id = $row['c'];
 	}
-
-	// Now, associate the tags to the building
-	// It is assumed here that the tags already exist in the tag table
-	$sql = "INSERT INTO community.tag_building(tag_id,building_id) SELECT t.id,".$building_id." FROM community.tag t WHERE t.label in (".$p_tags_list.")";
-	//echo $sql;
-	$recordSet = $pgconn->prepare($sql);
-	$recordSet->execute();
-
 	exit('{"success":"true","building_id":"'.$building_id.'"}');
 }
 catch (Exception $e) {
