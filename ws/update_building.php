@@ -20,6 +20,7 @@ else
 try {
 	# Parameters
 	$p_name = isset($_REQUEST['building_name']) ? $_REQUEST['building_name'] : '';
+	$p_name = str_replace("'", "''", $p_name);
 	$p_tags = isset($_REQUEST['hidden-tags']) ? $_REQUEST['hidden-tags'] : '';
 	$p_tags_arr=explode(",",$p_tags);
 	# Merging back the array and adding the quotes
