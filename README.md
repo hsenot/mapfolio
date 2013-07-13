@@ -1,4 +1,4 @@
-solarsize
-=========
+mapfolio
+========
 
-A web mapping application for solar PV siting, sizing and communication.
+A web mapping application to manage building portfolios.
