@@ -472,13 +472,12 @@
 					} 
 				});
 
-				map.on('moveend',refreshBuildings)
-
 			}
 		}
 
 		// Map initialisation sequence
 		initmap();
+		map.on('moveend',refreshBuildings);
 		$('#createBuildingModal').modal({show:false,backdrop:false});
 		refreshBuildings();
 
