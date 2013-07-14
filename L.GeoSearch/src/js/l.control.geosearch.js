@@ -118,6 +118,11 @@ L.Control.GeoSearch = L.Control.extend({
         else
             this._positionMarker.setLatLng([location.Y, location.X]);
 
+        // Binding event to move marker out of view on click
+        this._positionMarker.on('click',function(m){
+            m.target.setLatLng([0, 0]);
+        });
+
         this._map.setView([location.Y, location.X], this._config.zoomLevel, false);
         this._map.fireEvent('geosearch_showlocation', {Location: location});
     },
