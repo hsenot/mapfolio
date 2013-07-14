@@ -1,7 +1,6 @@
 L.BingLayer = L.TileLayer.extend({
 	options: {
 		subdomains: [0, 1, 2, 3],
-		type: 'Aerial',
 		attribution: 'Bing',
 		culture: ''
 	},

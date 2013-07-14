@@ -36,6 +36,12 @@
 		p {
 		    margin: 0 0 2px;
 		}
+		span{
+			font-size: 11px;
+	    	font-weight: bold;
+    		line-height: 12px;
+    		vertical-align: bottom;
+		}
 
 		/* Bootstrap */
 		.well {
@@ -172,17 +178,21 @@
 			map = L.map('map').setView([-37.815,144.963], 16).on('removelayer',function(f){
 				alert("removing layer"+f);
 			});
-			// Create the Bing layer and add it to the map
-			var binglayer = new L.BingLayer('AgxcV_eHKN9sD_UzjdBKiXru-b_mGfIKjD1SkgR0zJhhGQAAKqFvTs442gc1Eaay','Aerial')
-				.addTo(map);
+			// Create the Bing basemap layers
+			var bingMapsKey = 'AgxcV_eHKN9sD_UzjdBKiXru-b_mGfIKjD1SkgR0zJhhGQAAKqFvTs442gc1Eaay';
+			var bingaerial = new L.BingLayer(bingMapsKey,{type:'Aerial'});
+			var bingroad = new L.BingLayer(bingMapsKey,{type:'Road'});
+			var baseMaps = {
+			    "Imagery": bingaerial,
+			    "Map": bingroad
+			};
+			new L.control.layers(baseMaps).addTo(map);
+			// Clicking on the first basemap
+			$($('.leaflet-control-layers-selector')[0]).click()
 
 			new L.Control.GeoSearch({
             	provider: new L.GeoSearch.Provider.Google({region:'au'})
         	}).addTo(map);
-
-			bing_cb = function(data){
-				alert("Geocode returned!");
-			};
 
 			buildingVectorLayer = L.geoJson({features:[],type:"FeatureCollection"},{
 			    style: function (feature) {
@@ -250,6 +260,7 @@
 			        layer.bindPopup(allDiv,{keepInView:true,minWidth:300});
 			    }
 			}).addTo(map);
+
 
 			loadBuildingDetails = function(buildingId) {
 				// Loading additional properties using AJAX
@@ -336,7 +347,7 @@
 			});
 
 			// Tooltip overrides before the control is added to the map
-			L.drawLocal.draw.toolbar.buttons.polygon = "Draw a building roof";
+			L.drawLocal.draw.toolbar.buttons.polygon = "Draw a building";
 			///L.drawLocal.edit.toolbar.buttons.remove = "Delete a building roof";
 
 			map.addControl(drawControl);
