@@ -43,9 +43,25 @@ try {
 	$recordSet = $pgconn->prepare($sql);
 	$recordSet->execute();
 
-	# Now, associate the new tags to the building
-	# It is assumed here that the tags already exist in the tag table
-	$sql = "INSERT INTO ".$schema.".tag_building(tag_id,building_id) SELECT t.id,".$p_building_id." FROM ".$schema.".tag t WHERE t.label in (".$p_tags_list.")";
+	# Only if there are some tags associted to this update
+	if (!empty($p_tags))
+	{
+		# Insert all tags that were not previously in the database
+		$sql = "INSERT INTO ".$schema.".tag(label) SELECT x FROM unnest(array[".$p_tags_list."]) AS x WHERE x NOT IN (SELECT label FROM ".$schema.".tag)";
+		#echo $sql;
+		$recordSet = $pgconn->prepare($sql);
+		$recordSet->execute();
+
+		# Now, associate the new tags to the building
+		# It is assumed here that the tags already exist in the tag table
+		$sql = "INSERT INTO ".$schema.".tag_building(tag_id,building_id) SELECT t.id,".$p_building_id." FROM ".$schema.".tag t WHERE t.label in (".$p_tags_list.")";
+		#echo $sql;
+		$recordSet = $pgconn->prepare($sql);
+		$recordSet->execute();
+	}
+
+	# Remove all tags that have no more association to any building
+	$sql = "DELETE FROM ".$schema.".tag t WHERE t.id not in (SELECT distinct(tb.tag_id) FROM ".$schema.".tag_building tb)";
 	#echo $sql;
 	$recordSet = $pgconn->prepare($sql);
 	$recordSet->execute();
