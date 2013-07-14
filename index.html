@@ -98,13 +98,13 @@
 		<div class="row">
 			<div class="span2">
 				<div class="well inlineblock">
-					<p style="display:inline-block;font-size:11px;line-height:15px;text-align:center;">Total number of buildings</p> <p id="total_building_number" style="font-size:28px;text-align:center"><img src='ajax-loader.gif' style="height:16px;width:16px;align:center;"></p>
+					<p style="display:inline-block;font-size:11px;line-height:15px;text-align:center;">Total number of buildings</p> <p id="total_building_number" style="font-size:28px;text-align:center"><img src='style/ajax-loader.gif' style="height:16px;width:16px;align:center;"></p>
 				</div>
 			</div>
 
 			<div class="span6">
 				<div id="tagTally" class="well inlineblock" style="margin-left:4px;vertical-align:top;text-align:center;">
-					<img src='ajax-loader.gif'>
+					<img src='style/ajax-loader.gif'>
 				</div>
 			</div>
 
@@ -186,7 +186,21 @@
 			    "Imagery": bingaerial,
 			    "Map": bingroad
 			};
-			new L.control.layers(baseMaps).addTo(map);
+
+			// Adding an address layer from Vicmap
+			var addressWMSLayer = L.tileLayer.wms("http://services.land.vic.gov.au/catalogue/publicproxy/guest/sdm_geoserver/wms", {
+				layers: 'sii:VSUP.ADDRESS_SDO',
+				format: 'image/png',
+				transparent: true,
+				attribution: "Vicmap data © 2013 DEPI",
+				sld: "https://raw.github.com/hsenot/mapfolio/style/sii-VSUP.ADDRESS_SDO.sld"
+			}).addTo(map);
+
+			var overlays = {
+				"Address":addressWMSLayer
+			};
+
+			new L.control.layers(baseMaps,overlays).addTo(map);
 			// Clicking on the first basemap
 			$($('.leaflet-control-layers-selector')[0]).click()
 
@@ -218,7 +232,7 @@
 			    	var htmlArray = [];
 			    	var allDiv, divRead, divReadContent, divReadFooter, divUpdate='', divUpdateContent, divUpdateFooter, divDelete='', divDeleteContent, divDeleteFooter;
 
-			    	divReadContent = "<div id='selectedBuildingExtraProperties'><img src='ajax-loader.gif'></div>";
+			    	divReadContent = "<div id='selectedBuildingExtraProperties'><img src='style/ajax-loader.gif'></div>";
 			    	divReadFooter = 
 			    	"<div style='text-align:center;'>"+
 			    		"<a class='btn btn-mini' href='#"+feature.properties.id+"' onClick='moveToBuilding("+feature.properties.id+",\"zoom\")'><i class='icon-zoom-in'></i> Zoom to</a>&nbsp;"+
@@ -260,7 +274,6 @@
 			        layer.bindPopup(allDiv,{keepInView:true,minWidth:300});
 			    }
 			}).addTo(map);
-
 
 			loadBuildingDetails = function(buildingId) {
 				// Loading additional properties using AJAX
