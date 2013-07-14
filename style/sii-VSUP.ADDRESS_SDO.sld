@@ -25,7 +25,13 @@
                         <Label>
                             <ogc:Function name="strSubstring">
                                 <ogc:PropertyName>EZI_ADDRESS</ogc:PropertyName>
-                                <ogc:Literal>0</ogc:Literal>
+                                <ogc:Add>
+                                    <ogc:Function name="strIndexOf">
+                                            <ogc:PropertyName>EZI_ADDRESS</ogc:PropertyName>
+                                            <ogc:Literal>/</ogc:Literal>
+                                    </ogc:Function>
+                                    <ogc:Literal>1</ogc:Literal>
+                                </ogc:Add>
                                 <ogc:Function name="strIndexOf">
                                         <ogc:PropertyName>EZI_ADDRESS</ogc:PropertyName>
                                         <!-- Work-around to be able to detect a space character -->
