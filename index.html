@@ -144,12 +144,13 @@
 	<script src="L.GeoSearch/src/js/l.control.geosearch.js"></script>
 	<script src="L.GeoSearch/src/js/l.geosearch.provider.google.js"></script>
 	<script>
-
-		var map, refreshBuildings, buildingVectorLayer, buildingDetailsJSON, buildingPopupToOpen, totalRoofAreaDisplayed = 0, moveToBuilding, drawnItems, layerToCreate, editBuildingDetails, loadBuildingDetails, currentClickedTag='', bing_cb;
-		// Removed: 'black'
-		var css_colors = ['aqua', 'blue', 'fuchsia', 'gray', 'green', 'lime', 'maroon', 'navy', 'olive', 'orange', 'purple', 'red', 'silver', 'teal', 'white', 'yellow'];
+		// Global variables
+		var map, refreshBuildings, buildingVectorLayer, buildingDetailsJSON, buildingPopupToOpen, moveToBuilding, layerToCreate, editBuildingDetails, loadBuildingDetails, currentClickedTag='';
+		var css_colors = ['aqua', 'blue', 'fuchsia', 'gray', 'green', 'lime', 'maroon', 'navy', 'olive', 'orange', 'purple', 'red', 'silver', 'teal', 'white', 'yellow','black'];
 		var animateOptions = {animate:true,duration:1,easeLinearity:0.1};
 		var schemaName = 'community';
+
+		// Helper functions
 		function numberWithCommas(x) {
 		    return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
 		}
@@ -164,7 +165,7 @@
             var h = $(window).height();
             var w = $(window).width();
             // Using all the height available, up to 500px
-            var hmax = Math.min(h-135,600);
+            var hmax = Math.min(h-135,700);
             // Setting height to window height minus the header and footer sizes
             $("#map").css('height',hmax);
         };
@@ -174,10 +175,11 @@
         $(window).resize(rsz);
 
 		function initmap() {
-			// Set up the map
-			map = L.map('map').setView([-37.815,144.963], 16).on('removelayer',function(f){
-				alert("removing layer"+f);
-			});
+			// Map setup
+			map = L.map('map').setView([-37.815,144.963], 16);
+
+			// Layer setup
+
 			// Create the Bing basemap layers
 			var bingMapsKey = 'AgxcV_eHKN9sD_UzjdBKiXru-b_mGfIKjD1SkgR0zJhhGQAAKqFvTs442gc1Eaay';
 			var bingaerial = new L.BingLayer(bingMapsKey,{type:'Aerial'});
@@ -187,7 +189,7 @@
 			    "Map": bingroad
 			};
 
-			// Adding an address layer from Vicmap
+			// Address layer from Vicmap with a custom style
 			var addressWMSLayer = L.tileLayer.wms("http://services.land.vic.gov.au/catalogue/publicproxy/guest/sdm_geoserver/wms", {
 				layers: 'sii:VSUP.ADDRESS_SDO',
 				format: 'image/png',
@@ -195,25 +197,27 @@
 				attribution: "Vicmap data © 2013 DEPI",
 				sld: "https://raw.github.com/hsenot/mapfolio/master/style/sii-VSUP.ADDRESS_SDO.sld"
 			});
-
 			var overlays = {
-				"Address":addressWMSLayer
+				"Address (1:10k)":addressWMSLayer
 			};
 
+			// Layer switcher control
 			new L.control.layers(baseMaps,overlays).addTo(map);
 			// Clicking on the first basemap
 			$($('.leaflet-control-layers-selector')[0]).click()
 
+			// Geocoder control
 			new L.Control.GeoSearch({
             	provider: new L.GeoSearch.Provider.Google({region:'au'})
         	}).addTo(map);
 
+			// Building layer
 			buildingVectorLayer = L.geoJson({features:[],type:"FeatureCollection"},{
 			    style: function (feature) {
-			    	var fcolor = 'yellow';
+			    	var fcolor = 'teal';
 			    	if (feature.properties.c != "0")
 			    	{
-			    		fcolor='green';
+			    		fcolor='lime';
 			    	}
 			        return {
 			        	color: fcolor,
@@ -224,7 +228,6 @@
 			    },
 			    onEachFeature: function (feature, layer) {
 			    	var feature_name = feature.properties.name;
-			    	totalRoofAreaDisplayed = totalRoofAreaDisplayed + parseInt(feature.properties.area_m2);
 			    	if (!feature_name)
 			    	{
 			    		feature_name = "Unknown";
@@ -321,16 +324,6 @@
 				});				
 			};
 
-			map.on('popupopen', function(e) {
-				// ID of the building whose popup is open
-				var bid = e.popup._source.feature.id;
-				loadBuildingDetails(bid);
-				moveToBuilding(bid,'pan');
-			});
-
-			drawnItems = new L.FeatureGroup();
-			map.addLayer(drawnItems);
-
 			var drawControl = new L.Control.Draw({
 				draw: {
 					// Other positions just don't work
@@ -361,11 +354,7 @@
 
 			// Tooltip overrides before the control is added to the map
 			L.drawLocal.draw.toolbar.buttons.polygon = "Draw a building";
-			///L.drawLocal.edit.toolbar.buttons.remove = "Delete a building roof";
-
 			map.addControl(drawControl);
-
-			$('#createBuildingModal').modal({show:false,backdrop:false});
 
 			map.on('draw:created', function (e) {
 				var type = e.layerType,
@@ -405,6 +394,13 @@
 				});
 
 				$('#createBuildingModal').addClass('hide');
+			});
+
+			map.on('popupopen', function(e) {
+				// ID of the building whose popup is open
+				var bid = e.popup._source.feature.id;
+				loadBuildingDetails(bid);
+				moveToBuilding(bid,'pan');
 			});
 
 			refreshBuildings = function(){
@@ -474,15 +470,19 @@
 							}
 						}
 					} 
-				});				
-			}
+				});
 
+				map.on('moveend',refreshBuildings)
+
+			}
 		}
 
+		// Map initialisation sequence
 		initmap();
-		map.on('moveend',refreshBuildings)
+		$('#createBuildingModal').modal({show:false,backdrop:false});
 		refreshBuildings();
 
+		// Building tally widget
 		refreshBuildingNumber = function(){
 			// Refreshing the tally of tags
 			$.ajax({
@@ -500,7 +500,7 @@
 		};
 		refreshBuildingNumber();
 
-		// List the tags and their respective weight
+		// Tag tally widget
 		refreshTagTally = function(){
 			// Refreshing the tally of tags
 			$.ajax({
@@ -570,7 +570,6 @@
 				}
 			});
 		};
-
 		refreshTagTally();
 
 		moveToBuilding = function(buildingId,moveType){ 
