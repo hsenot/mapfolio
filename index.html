@@ -167,12 +167,21 @@
 			return str.replace(/\w\S*/g, function(txt){return txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase();});
 		}
 
-		// Parameters passed in the URL
-		var schema_param = getParameterByName('schema');
-		if (schema_param)
-		{
-			schemaName = schema_param;
-		}
+        // Parameters passed in the URL
+        var schema_param = getParameterByName('schema');
+        if (schema_param)
+        {
+            schemaName = schema_param;
+        }
+        else
+        {
+            schema_param=window.location.pathname.split("/")[window.location.pathname.split("/").length-1];
+            if (schema_param)
+            {
+                schemaName = schema_param;
+            }
+ 	   }
+
 
         // Window resize function
         var rsz = function(){
