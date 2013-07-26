@@ -173,6 +173,15 @@
 		{
 			schemaName = schema_param;
 		}
+		else
+		{
+			schema_param=window.location.pathname.split("/")[window.location.pathname.split("/").length-1];
+			if (schema_param)
+			{
+				schemaName = schema_param;
+			}
+		}
+
 
         // Window resize function
         var rsz = function(){
