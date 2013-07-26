@@ -378,6 +378,24 @@
 			L.drawLocal.draw.toolbar.buttons.polygon = "Draw a building";
 			map.addControl(drawControl);
 
+			map.on('draw:drawstart', function(e){
+				// Deselect any building group, so that we can see possible preexisting buildings, and also the newly
+				// created building if it is not tagged straight away with the group tag
+				$('.tag-button').each(function(){
+					if (currentClickedTag == $(this).html())
+					{
+						// Clicked button style management
+						$(this).removeClass('btn-warning').addClass('btn-primary');
+
+						// Removing current clicked tag
+						currentClickedTag=null;
+
+						// Refreshing the view with all buildings (no tags)
+						refreshBuildings();
+					}
+				});
+			});
+
 			map.on('draw:created', function (e) {
 				var type = e.layerType,
 					layer = e.layer;
