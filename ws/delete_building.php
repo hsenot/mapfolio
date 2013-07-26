@@ -37,6 +37,12 @@ try {
 	$recordSet = $pgconn->prepare($sql);
 	$recordSet->execute();
 
+	# Remove all tags that have no more association to any building
+	$sql = "DELETE FROM ".$schema.".tag t WHERE t.id not in (SELECT distinct(tb.tag_id) FROM ".$schema.".tag_building tb)";
+	#echo $sql;
+	$recordSet = $pgconn->prepare($sql);
+	$recordSet->execute();
+
 	exit('{"success":"true","building_ids":"'.$p_building_ids.'"}');
 }
 catch (Exception $e) {
