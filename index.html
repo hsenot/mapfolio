@@ -9,6 +9,7 @@
 	<link rel="stylesheet" href="leaflet/leaflet.css" />
 	<link rel="stylesheet" href="leaflet.draw/leaflet.draw.css" />
 	<link rel="stylesheet" href="L.GeoSearch/src/css/l.geosearch.css" />
+	<link href="select2/select2.css" rel="stylesheet"/>
 	<!--[if lte IE 8]>
 		<link rel="stylesheet" href="leaflet.ie.css" />
 		<link rel="stylesheet" href="leaflet.draw/leaflet.draw.ie.css" />
@@ -90,6 +91,14 @@
 			display: inline-block;
 		}
 
+		.select2-results {
+			max-height: 450px;
+		}
+
+		.select2-results .select2-result-label {
+			line-height: 10px;
+		}
+
 	</style>
 </head>
 <body>
@@ -102,36 +111,33 @@
 				</div>
 			</div>
 
-			<div class="span10">
+			<div class="span6">
 				<div id="tagTally" class="well inlineblock" style="margin-left:4px;vertical-align:top;text-align:center;">
 					<img src='style/ajax-loader.gif'>
 				</div>
 			</div>
 
-			<!--
 			<div class="span4">
 				<div class="well">
 					More stuff here: maybe a locator/search
 				</div>
 			</div>
-			-->
 		</div>
 
 		<div class="row">
-			<div class="span12">
+			<div class="span8">
 				<div class="well" style="margin-bottom:0px;">
 					<div id="map" style="height:50px;"></div>
 				</div>
 			</div>
 
-			<!--
 			<div class="span4">
 				<div class="well">
-					Building list
+					<input type="hidden" id="e1">
 					<p style="vertical-align:bottom;">Download links (KML/GeoJSON)</p>
 				</div>
 			</div>
-			-->
+
 		</div>
 	</div>
 
@@ -143,6 +149,8 @@
 	<script src="leaflet.draw/leaflet.draw.js"></script>
 	<script src="L.GeoSearch/src/js/l.control.geosearch.js"></script>
 	<script src="L.GeoSearch/src/js/l.geosearch.provider.google.js"></script>
+	<script src="tabletop/src/tabletop.js"></script>
+	<script src="select2/select2.js"></script>
 	<script>
 		// Global variables
 		var map, refreshBuildings, buildingVectorLayer, buildingDetailsJSON, buildingPopupToOpen, moveToBuilding, layerToCreate, editBuildingDetails, loadBuildingDetails, currentClickedTag='';
@@ -197,6 +205,37 @@
         $(window).resize(rsz);
 
 		function initmap() {
+
+			Tabletop.init({ 
+				key: '0Asxkb_brURPldHBEb3NFMWxZdDl5dlR6TmdUWnZhWmc',
+				callback: function(data, tabletop) {
+					// Adding a full search query
+					for (var i=0;i < data.length;i++)
+					{
+						data[i].fullsearch = data[i].buildingaddress+"#"+data[i].applicant+"#"+data[i].projectdescription+"#"+data[i].state;
+					}
+
+					function searchFormatResult(project) {
+						var markup = "<b>"+project.buildingaddress+" ("+project.state+")</b><br>";
+						markup += "<p style='font-size:9px;''>"+project.projectdescription+"</p>";
+						return markup;
+					}
+
+					function format(item) { return item.buildingaddress; };
+					// Initialise the select 2 drop down with the data
+					$("#e1").select2({
+						width: 280,
+						placeholder: "Search energy efficient projects ...",
+						minimumInputLength: 3,
+						data:{ results: data, text: 'fullsearch'},
+						formatSelection: format,
+            			formatResult: searchFormatResult,
+            			dropdownCssClass: "bigdrop"
+					});
+				},
+				simpleSheet: true 
+			});
+
 			// Map setup
 			map = L.map('map').setView([-37.815,144.963], 16);
 
